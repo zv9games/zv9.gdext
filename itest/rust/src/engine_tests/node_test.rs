@@ -70,11 +70,11 @@ fn node_scene_tree() {
 
     let mut scene = PackedScene::new_gd();
     let err = scene.pack(parent.clone());
-    assert_eq!(err, global::Error::OK);
+    assert_eq!(err, global::Error::Ok);
 
     let mut tree = SceneTree::new_alloc();
     let err = tree.change_scene_to_packed(scene);
-    assert_eq!(err, global::Error::OK);
+    assert_eq!(err, global::Error::Ok);
 
     // Note: parent + child are not owned by PackedScene, thus need to be freed
     // (verified by porting this very test to GDScript)

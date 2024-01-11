@@ -62,79 +62,79 @@ use godot::engine::zip_packer::ZipAppend;
 #[itest]
 fn codegen_enums_exist() {
     // Remove entire enum name.
-    let _ = ModeFlags::READ_WRITE;
-    let _ = BodyMode::KINEMATIC;
-    let _ = CacheMode::IGNORE;
-    let _ = CenterOfMassMode::AUTO;
-    let _ = Format::RF;
-    let _ = GenEditState::DISABLED;
-    let _ = JointType::PIN;
-    let _ = Mode::SKY;
-    let _ = Month::FEBRUARY;
-    let _ = ProcessMode::WHEN_PAUSED;
-    let _ = RenderingInfo::BUFFER_MEM_USED;
-    let _ = SystemDir::DCIM;
+    let _ = ModeFlags::ReadWrite;
+    let _ = BodyMode::Kinematic;
+    let _ = CacheMode::Ignore;
+    let _ = CenterOfMassMode::Auto;
+    let _ = Format::Rf;
+    let _ = GenEditState::Disabled;
+    let _ = JointType::Pin;
+    let _ = Mode::Sky;
+    let _ = Month::February;
+    let _ = ProcessMode::WhenPaused;
+    let _ = RenderingInfo::BufferMemUsed;
+    let _ = SystemDir::Dcim;
 
     // Remove entire name, but MiXED case.
-    let _ = VoxelGiQuality::LOW;
-    let _ = CcdMode::CAST_RAY;
-    let _ = UpnpResult::HTTP_ERROR;
-    let _ = SdfgiYScale::SCALE_100_PERCENT;
-    let _ = EnvironmentSdfgiYScale::SCALE_50_PERCENT;
+    let _ = VoxelGiQuality::Low;
+    let _ = CcdMode::CastRay;
+    let _ = UpnpResult::HttpError;
+    let _ = SdfgiYScale::Scale100Percent;
+    let _ = EnvironmentSdfgiYScale::Scale50Percent;
 
     // Entire enum name, but changed.
-    let _ = Parameter::INITIAL_LINEAR_VELOCITY;
-    let _ = SpaceParameter::CONTACT_MAX_SEPARATION;
-    let _ = AreaParameter::GRAVITY;
-    let _ = StencilOperation::KEEP;
-    let _ = CompareOperator::LESS;
-    let _ = CubeMapLayer::RIGHT;
-    let _ = Camera2DProcessCallback::PHYSICS;
+    let _ = Parameter::InitialLinearVelocity;
+    let _ = SpaceParameter::ContactMaxSeparation;
+    let _ = AreaParameter::Gravity;
+    let _ = StencilOperation::Keep;
+    let _ = CompareOperator::Less;
+    let _ = CubeMapLayer::Right;
+    let _ = Camera2DProcessCallback::Physics;
 
     // Prefix omitted.
-    let _ = ArrayType::CUSTOM0;
-    let _ = PathPostProcessing::EDGECENTERED;
-    let _ = PipelineDynamicStateFlags::DEPTH_BIAS;
-    let _ = ProcessInfo::COLLISION_PAIRS;
-    let _ = ResponseCode::NO_CONTENT;
-    let _ = UpdateMode::WHEN_VISIBLE;
-    let _ = ZipAppend::CREATE;
+    let _ = ArrayType::Custom0;
+    let _ = PathPostProcessing::Edgecentered; // only in experimental API
+    let _ = PipelineDynamicStateFlags::DepthBias;
+    let _ = ProcessInfo::CollisionPairs;
+    let _ = ResponseCode::NoContent;
+    let _ = UpdateMode::WhenVisible;
+    let _ = ZipAppend::Create;
 
     // Plural.
-    let _ = Hands::LEFT;
-    let _ = Features::SHADERS;
-    let _ = Flags::ALBEDO_TEXTURE_FORCE_SRGB;
+    let _ = Hands::Left;
+    let _ = Features::Shaders;
+    let _ = Flags::AlbedoTextureForceSrgb;
 
     // Unrelated name.
-    let _ = GlobalShaderParameterType::BOOL;
-    let _ = ArrayFormat::FLAG_FORMAT_VERSION_2;
-    let _ = CustomControlContainer::CANVAS_EDITOR_SIDE_LEFT;
+    let _ = GlobalShaderParameterType::Bool;
+    let _ = ArrayFormat::FlagFormatVersion2;
+    let _ = CustomControlContainer::CanvasEditorSideLeft;
 
     // Implicitly used class name instead of enum name (OpenXR*, XR*).
-    let _ = ActionType::POSE;
-    let _ = TrackingConfidence::NONE;
-    let _ = TrackingStatus::NOT_TRACKING;
-    let _ = EnvironmentBlendMode::OPAQUE;
+    let _ = ActionType::Pose;
+    let _ = TrackingConfidence::None;
+    let _ = TrackingStatus::NotTracking;
+    let _ = EnvironmentBlendMode::Opaque;
 
     // Abbreviation.
-    let _ = Operator::ATAN2;
-    let _ = Function::LOG;
-    let _ = EnvironmentSsaoQuality::HIGH;
+    let _ = Operator::Atan2;
+    let _ = Function::Log;
+    let _ = EnvironmentSsaoQuality::High;
 
     // Remove postfix (Mode, Type, Flags, Param, ...).
-    let _ = CompressionMode::DEFLATE;
-    let _ = AreaSpaceOverrideMode::COMBINE;
-    let _ = ProjectionType::ORTHOGONAL;
-    let _ = ConnectFlags::PERSIST;
-    let _ = HandJointFlags::ORIENTATION_TRACKED;
-    let _ = ParticleFlags::ROTATE_Y;
-    let _ = G6dofJointAxisParam::LINEAR_LOWER_LIMIT;
-    let _ = ThreadLoadStatus::INVALID_RESOURCE;
-    let _ = ViewportScaling3DMode::BILINEAR;
+    let _ = CompressionMode::Deflate;
+    let _ = AreaSpaceOverrideMode::Combine;
+    let _ = ProjectionType::Orthogonal;
+    let _ = ConnectFlags::Persist;
+    let _ = HandJointFlags::OrientationTracked;
+    let _ = ParticleFlags::RotateY;
+    let _ = G6dofJointAxisParam::LinearLowerLimit;
+    let _ = ThreadLoadStatus::InvalidResource;
+    let _ = ViewportScaling3DMode::Bilinear;
 
     // Remaining identifier is non-valid (digit).
-    let _ = Subdiv::SUBDIV_64;
-    let _ = FftSize::SIZE_256;
-    let _ = Msaa::MSAA_8X;
-    let _ = MultimeshTransformFormat::TRANSFORM_3D;
+    let _ = Subdiv::Subdiv64;
+    let _ = FftSize::Size256;
+    let _ = Msaa::Msaa8x;
+    let _ = MultimeshTransformFormat::Transform3d;
 }

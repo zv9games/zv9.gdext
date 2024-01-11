@@ -422,7 +422,7 @@ fn typed_array_pass_to_godot_func() {
     let mut texture = Texture2DArray::new_gd();
     let error = texture.create_from_images(images);
 
-    assert_eq!(error, Error::OK);
+    assert_eq!(error, Error::Ok);
     assert_eq!((texture.get_width(), texture.get_height()), (2, 4));
 }
 

@@ -25,12 +25,12 @@ fn remove_test_file() {
 
 #[itest]
 fn basic_read_write_works() {
-    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::WRITE).unwrap();
+    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::Write).unwrap();
     let line_to_store = GString::from("TESTING1");
     file.write_gstring_line(line_to_store.clone()).unwrap();
     drop(file);
 
-    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::READ).unwrap();
+    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::Read).unwrap();
     let gotten_line = file.read_gstring_line().unwrap();
     assert_eq!(line_to_store, gotten_line);
     drop(file);
@@ -40,7 +40,7 @@ fn basic_read_write_works() {
 
 #[itest]
 fn write_trait_works() {
-    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::WRITE).unwrap();
+    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::Write).unwrap();
 
     let integers: Vec<u8> = (0..=50).collect();
     file.write_all(&integers)
@@ -53,14 +53,14 @@ fn write_trait_works() {
 
 #[itest]
 fn read_trait_works() {
-    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::WRITE).unwrap();
+    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::Write).unwrap();
 
     let integers: Vec<u8> = (0..=50).collect();
     file.write_all(&integers)
         .expect("couldn't write integer vector");
     drop(file);
 
-    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::READ).unwrap();
+    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::Read).unwrap();
 
     let mut read_integers = Vec::new();
     file.read_to_end(&mut read_integers)
@@ -73,7 +73,7 @@ fn read_trait_works() {
 
 #[itest]
 fn bufwriter_works() {
-    let file = GFile::open(TEST_FULL_PATH, ModeFlags::WRITE).unwrap();
+    let file = GFile::open(TEST_FULL_PATH, ModeFlags::Write).unwrap();
     let mut bufwriter = BufWriter::new(file);
 
     let integers: Vec<u8> = (0..=255).collect();
@@ -88,14 +88,14 @@ fn bufwriter_works() {
 
 #[itest]
 fn bufreader_works() {
-    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::WRITE).unwrap();
+    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::Write).unwrap();
 
     let integers: Vec<u8> = (0..=50).collect();
     file.write_all(&integers)
         .expect("couldn't write integer vector");
     drop(file);
 
-    let file = GFile::open(TEST_FULL_PATH, ModeFlags::READ).unwrap();
+    let file = GFile::open(TEST_FULL_PATH, ModeFlags::Read).unwrap();
     let mut bufreader = BufReader::new(file);
 
     let mut read_integers = Vec::new();
@@ -110,7 +110,7 @@ fn bufreader_works() {
 
 #[itest]
 fn seek_trait_works() {
-    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::WRITE_READ).unwrap();
+    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::WriteRead).unwrap();
 
     let integers: Vec<u8> = (0..=50).step_by(1).collect();
     file.write_all(&integers)
@@ -141,7 +141,7 @@ fn seek_trait_works() {
 
 #[itest]
 fn bufread_trait_works() {
-    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::WRITE_READ).unwrap();
+    let mut file = GFile::open(TEST_FULL_PATH, ModeFlags::WriteRead).unwrap();
 
     let lines = String::from("First line\nSecond line\nThird line\nFourth\nLast line");
 

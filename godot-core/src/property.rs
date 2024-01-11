@@ -36,7 +36,7 @@ pub trait Export: Var {
 
 /// Marks types that are registered via "type string hint" in Godot.
 ///
-/// See [`PropertyHint::TYPE_STRING`] and [upstream docs].
+/// See [`PropertyHint::TypeString`] and [upstream docs].
 ///
 /// [upstream docs]: https://docs.godotengine.org/en/stable/classes/class_%40globalscope.html#enum-globalscope-propertyhint
 pub trait TypeStringHint {
@@ -102,12 +102,12 @@ pub struct PropertyHintInfo {
 
 impl PropertyHintInfo {
     /// Create a new `PropertyHintInfo` with a property hint of
-    /// [`PROPERTY_HINT_NONE`](PropertyHint::NONE).
+    /// [`PROPERTY_HINT_NONE`](PropertyHint::None).
     ///
     /// Usually Godot expects this to be combined with a `hint_string` containing the name of the type.
     pub fn with_hint_none<S: Into<GString>>(type_name: S) -> Self {
         Self {
-            hint: PropertyHint::NONE,
+            hint: PropertyHint::None,
             hint_string: type_name.into(),
         }
     }
@@ -166,7 +166,7 @@ pub mod export_info_functions {
         };
 
         PropertyHintInfo {
-            hint: PropertyHint::RANGE,
+            hint: PropertyHint::Range,
             hint_string: hint_string.into(),
         }
     }
@@ -221,7 +221,7 @@ pub mod export_info_functions {
         let hint_string: String = EnumVariant::slice_as_hint_string(variants);
 
         PropertyHintInfo {
-            hint: PropertyHint::ENUM,
+            hint: PropertyHint::Enum,
             hint_string: hint_string.into(),
         }
     }
@@ -230,7 +230,7 @@ pub mod export_info_functions {
         let hint_string = comma_separate_boolean_idents!(attenuation, positive_only);
 
         PropertyHintInfo {
-            hint: PropertyHint::EXP_EASING,
+            hint: PropertyHint::ExpEasing,
             hint_string: hint_string.into(),
         }
     }
@@ -244,7 +244,7 @@ pub mod export_info_functions {
         let hint_string = BitFlag::slice_as_hint_string(bits);
 
         PropertyHintInfo {
-            hint: PropertyHint::FLAGS,
+            hint: PropertyHint::Flags,
             hint_string: hint_string.into(),
         }
     }
@@ -259,9 +259,9 @@ pub mod export_info_functions {
 
     pub fn export_file_inner<S: AsRef<str>>(global: bool, filter: S) -> PropertyHintInfo {
         let hint = if global {
-            PropertyHint::GLOBAL_FILE
+            PropertyHint::GlobalFile
         } else {
-            PropertyHint::FILE
+            PropertyHint::File
         };
 
         PropertyHintInfo {
@@ -272,7 +272,7 @@ pub mod export_info_functions {
 
     pub fn export_placeholder<S: AsRef<str>>(placeholder: S) -> PropertyHintInfo {
         PropertyHintInfo {
-            hint: PropertyHint::PLACEHOLDER_TEXT,
+            hint: PropertyHint::PlaceholderText,
             hint_string: placeholder.as_ref().into(),
         }
     }
@@ -296,16 +296,16 @@ pub mod export_info_functions {
     // right side are the corresponding property hint. Godot is not always consistent between the two, such
     // as `export_multiline` being `PROPERTY_HINT_MULTILINE_TEXT`.
     default_export_funcs!(
-        export_flags_2d_physics => LAYERS_2D_PHYSICS,
-        export_flags_2d_render => LAYERS_2D_RENDER,
-        export_flags_2d_navigation => LAYERS_2D_NAVIGATION,
-        export_flags_3d_physics => LAYERS_3D_PHYSICS,
-        export_flags_3d_render => LAYERS_3D_RENDER,
-        export_flags_3d_navigation => LAYERS_3D_NAVIGATION,
-        export_dir => DIR,
-        export_global_dir => GLOBAL_DIR,
-        export_multiline => MULTILINE_TEXT,
-        export_color_no_alpha => COLOR_NO_ALPHA,
+        export_flags_2d_physics => Layers2dPhysics,
+        export_flags_2d_render => Layers2dRender,
+        export_flags_2d_navigation => Layers2dNavigation,
+        export_flags_3d_physics => Layers3dPhysics,
+        export_flags_3d_render => Layers3dRender,
+        export_flags_3d_navigation => Layers3dNavigation,
+        export_dir => Dir,
+        export_global_dir => GlobalDir,
+        export_multiline => MultilineText,
+        export_color_no_alpha => ColorNoAlpha,
     );
 }
 

@@ -476,7 +476,7 @@ fn object_engine_convert_variant_nil() {
 fn object_engine_returned_refcount() {
     let Some(file) = FileAccess::open(
         "res://itest.gdextension".into(),
-        file_access::ModeFlags::READ,
+        file_access::ModeFlags::Read,
     ) else {
         panic!("failed to open file used to test FileAccess")
     };

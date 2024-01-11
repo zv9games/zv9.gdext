@@ -90,10 +90,10 @@ pub fn make_property_impl(class_name: &Ident, fields: &Fields) -> TokenStream {
 
         let usage_flags = match usage_flags {
             UsageFlags::Inferred => {
-                quote! { ::godot::engine::global::PropertyUsageFlags::NONE }
+                quote! { ::godot::engine::global::PropertyUsageFlags::None }
             }
             UsageFlags::InferredExport => {
-                quote! { ::godot::engine::global::PropertyUsageFlags::DEFAULT }
+                quote! { ::godot::engine::global::PropertyUsageFlags::Default }
             }
             UsageFlags::Custom(flags) => quote! {
                 #(

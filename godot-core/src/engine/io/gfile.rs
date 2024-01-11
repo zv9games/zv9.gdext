@@ -39,11 +39,11 @@ use std::io::{BufRead, ErrorKind, Read, Seek, SeekFrom, Write};
 /// opening the file for different types of operations. Regardless of the provided `flags` value, the cursor is always
 /// positioned at the beginning of the file upon opening. To adjust its position, use [`Seek`]-provided methods.
 ///
-/// - `ModeFlags::READ` opens the file for read operations.
-/// - `ModeFlags::WRITE` opens the file for write operations. If the file doesn't exist at the provided `path`, it is
+/// - `ModeFlags::Read` opens the file for read operations.
+/// - `ModeFlags::Write` opens the file for write operations. If the file doesn't exist at the provided `path`, it is
 ///   created. If it exists, it is truncated after the file is closed.
-/// - `ModeFlags::READ_WRITE` opens the file for read and write operations. The file is not truncated after closing.
-/// - `ModeFlags::WRITE_READ` opens the file for read and write operations. If the file doesn't exist at the provided
+/// - `ModeFlags::ReadWrite` opens the file for read and write operations. The file is not truncated after closing.
+/// - `ModeFlags::WriteRead` opens the file for read and write operations. If the file doesn't exist at the provided
 ///   `path`, it is created. If it exists, it is truncated.
 ///
 /// ## Examples
@@ -56,7 +56,7 @@ use std::io::{BufRead, ErrorKind, Read, Seek, SeekFrom, Write};
 /// fn save_game() -> Result<(), std::io::Error> {
 ///
 ///     // Open file in write mode
-///     let mut my_file = GFile::open("user://save_game.sav", ModeFlags::WRITE)?;
+///     let mut my_file = GFile::open("user://save_game.sav", ModeFlags::Write)?;
 ///
 ///     // Write some lines into it
 ///     my_file.write_gstring_line("This is my saved game")?;
@@ -69,7 +69,7 @@ use std::io::{BufRead, ErrorKind, Read, Seek, SeekFrom, Write};
 /// fn load_game() -> Result<(), std::io::Error> {
 ///
 ///     // Open file in read mode
-///     let mut my_file = GFile::open("user://save_game.sav", ModeFlags::READ)?;
+///     let mut my_file = GFile::open("user://save_game.sav", ModeFlags::Read)?;
 ///
 ///     // Read lines
 ///     let first_line = my_file.read_gstring_line()?;
@@ -669,7 +669,7 @@ impl GFile {
     // Error handling utility function.
     fn check_error(&self) -> Result<(), std::io::Error> {
         let error = self.fa.get_error();
-        if error == Error::OK {
+        if error == Error::Ok {
             return Ok(());
         }
 

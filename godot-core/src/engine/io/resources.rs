@@ -171,7 +171,7 @@ where
         .path(path.clone())
         .done();
 
-    if res == GodotError::OK {
+    if res == GodotError::Ok {
         return Ok(());
     }
     Err(IoError::saving(

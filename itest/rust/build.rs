@@ -193,7 +193,7 @@ fn collect_inputs() -> Vec<Input> {
     pushs!(inputs; Variant, Variant, "123", 123i64.to_variant(), false, false, None);
 
     // EngineEnum
-    pushs!(inputs; int, Error, "0", Error::OK, false, false, None);
+    pushs!(inputs; int, Error, "0", Error::Ok, false, false, None);
 
     inputs
 }

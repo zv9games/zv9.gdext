@@ -210,9 +210,9 @@ impl GodotType for Variant {
             variant_type: Self::variant_type(),
             class_name: Self::class_name(),
             property_name: StringName::from(property_name),
-            hint: global::PropertyHint::NONE,
+            hint: global::PropertyHint::None,
             hint_string: GString::new(),
-            usage: global::PropertyUsageFlags::NIL_IS_VARIANT,
+            usage: global::PropertyUsageFlags::NilIsVariant,
         }
     }
 
