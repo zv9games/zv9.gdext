@@ -114,7 +114,15 @@ pub fn make_enumerator_names(
 
     shorten_enumerator_names(godot_class_name, godot_enum_name, enumerators)
         .iter()
-        .map(|e| ident(e))
+        .map(|scream_case| {
+            // Map to PascalCase; handle collisions with Rust keywords manually.
+            let pascal_case = match *scream_case {
+                "SELF" => "Self_".to_string(),
+                v => to_pascal_case(v),
+            };
+
+            ident(&pascal_case)
+        })
         .collect()
 }
 
