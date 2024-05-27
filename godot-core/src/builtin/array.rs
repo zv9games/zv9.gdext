@@ -314,8 +314,7 @@ impl<T: ArrayElement> Array<T> {
         unsafe { self.as_inner_mut() }.erase(value.to_variant());
     }
 
-    /// Assigns the given value to all elements in the array. This can be used together with
-    /// `resize` to create an array with a given size and initialized elements.
+    /// Assigns the given value to all elements in the array.
     pub fn fill(&mut self, value: &T) {
         // SAFETY: The array has type `T` and we're writing values of type `T` to it.
         unsafe { self.as_inner_mut() }.fill(value.to_variant());
