@@ -14,22 +14,12 @@ struct ConversionTest {}
 #[godot_api]
 impl ConversionTest {
     #[func]
-    fn accept_i32(value: i32) -> String {
-        value.to_string()
+    fn accept_float(value: f32) {
+        println!("accept_float: {value}");
     }
 
     #[func]
-    fn accept_f32(value: f32) -> String {
-        value.to_string()
-    }
-
-    #[func]
-    fn return_i32() -> i32 {
-        123
-    }
-
-    #[func]
-    fn return_f32() -> f32 {
-        123.45
+    fn accept_packed(value: PackedInt32Array) {
+        println!("accept_packed: {value}");
     }
 }

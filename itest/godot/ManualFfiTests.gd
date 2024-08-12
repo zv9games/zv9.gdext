@@ -360,3 +360,23 @@ func test_get_set():
 	assert_eq(obj.set_get, 1000)
 	assert(obj.is_set_called())
 	assert(obj.is_get_called())
+
+func test_ptrcall_conversions():
+	var ptrcall: Variant = ConversionTest.new()
+	ptrcall.accept_float(1.5)  # accept_float: 1
+	ptrcall.accept_float(1)    # accept_float: 1
+	ptrcall.accept_float(true) # accept_float: 1
+#	ptrcall.accept_float(null) # Parse Error: Cannot pass a value of type "null" as "float".
+
+func test_ptrcall_conversions_arrays():
+	var ptrcall: ConversionTest = ConversionTest.new()
+
+	var packed: PackedInt32Array = [1, 2, 3]
+	var untyped: Array = [1, 2, 3]
+	var typed: Array[int] = [1, 2, 3]
+	var typed_float: Array[float] = [1.1, 2.2, 3.3]
+
+	ptrcall.accept_packed(packed)      # PackedInt32Array -> ptrcall
+	ptrcall.accept_packed(untyped)     # Array            -> varcall
+	ptrcall.accept_packed(typed)       # Array[int]       -> varcall
+	ptrcall.accept_packed(typed_float) # Array[float]     -> varcall
