@@ -186,7 +186,7 @@ macro_rules! impl_varcall_signature_for_tuple {
                 err: *mut sys::GDExtensionCallError,
                 func: fn(sys::GDExtensionClassInstancePtr, Self::Params) -> Self::Ret,
             ) -> Result<(), CallError> {
-                //$crate::out!("in_varcall: {call_ctx}");
+                println!("in_varcall: {call_ctx}");
                 CallError::check_arg_count(call_ctx, arg_count as usize, $PARAM_COUNT)?;
 
                 #[cfg(feature = "trace")]
@@ -354,7 +354,7 @@ macro_rules! impl_ptrcall_signature_for_tuple {
                 func: fn(sys::GDExtensionClassInstancePtr, Self::Params) -> Self::Ret,
                 call_type: sys::PtrcallType,
             ) {
-                // $crate::out!("in_ptrcall: {call_ctx}");
+                println!("in_ptrcall: {call_ctx}");
 
                 #[cfg(feature = "trace")]
                 trace::push(true, true, &call_ctx);
