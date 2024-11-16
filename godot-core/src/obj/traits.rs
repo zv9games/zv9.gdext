@@ -13,6 +13,7 @@ use crate::obj::{bounds, Base, BaseMut, BaseRef, Bounds, Gd};
 use crate::storage::Storage;
 
 use godot_ffi as sys;
+use crate::classes;
 
 /// Makes `T` eligible to be managed by Godot and stored in [`Gd<T>`][crate::obj::Gd] pointers.
 ///
@@ -135,7 +136,10 @@ unsafe impl Bounds for NoBase {
 pub unsafe trait Inherits<Base: GodotClass>: GodotClass {}
 
 // SAFETY: Every class is a subclass of itself.
-unsafe impl<T: GodotClass> Inherits<T> for T {}
+// unsafe impl<T: GodotClass> Inherits<T> for T {}
+
+// SAFETY: Every class is a subclass of itself.
+unsafe impl<T: GodotClass> Inherits<classes::Object> for T {}
 
 /// Implemented for all user-defined classes, providing extensions on the raw object to interact with `Gd`.
 #[doc(hidden)]

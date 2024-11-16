@@ -176,6 +176,12 @@ fn make_class(class: &Class, ctx: &mut Context, view: &ApiView) -> GeneratedClas
         class_name.rust_ty
     );
 
+    let all_bases_without_object = {
+        let mut all_bases = all_bases;
+        all_bases.retain(|ty| ty.rust_ty != "Object");
+        all_bases
+    };
+
     // mod re_export needed, because class should not appear inside the file module, and we can't re-export private struct as pub.
     let imports = util::make_imports();
     let tokens = quote! {
@@ -232,8 +238,9 @@ fn make_class(class: &Class, ctx: &mut Context, view: &ApiView) -> GeneratedClas
             }
 
             #(
-                // SAFETY: #all_bases is a list of classes provided by Godot such that #class_name is guaranteed a subclass of all of them.
-                unsafe impl crate::obj::Inherits<crate::classes::#all_bases> for #class_name {}
+                // SAFETY: #all_bases_without_object is a list of classes provided by Godot,
+                // such that #class_name is guaranteed a subclass of all of them.
+                unsafe impl crate::obj::Inherits<crate::classes::#all_bases_without_object> for #class_name {}
             )*
 
             #godot_default_impl
@@ -248,7 +255,7 @@ fn make_class(class: &Class, ctx: &mut Context, view: &ApiView) -> GeneratedClas
                 ($Class:ident) => {
                     unsafe impl ::godot::obj::Inherits<::godot::classes::#class_name> for $Class {}
                     #(
-                        unsafe impl ::godot::obj::Inherits<::godot::classes::#all_bases> for $Class {}
+                        unsafe impl ::godot::obj::Inherits<::godot::classes::#all_bases_without_object> for $Class {}
                     )*
                 }
             }
