@@ -9,7 +9,7 @@ use std::fmt::{Debug, Display, Formatter, Result as FmtResult};
 use std::ops::{Deref, DerefMut};
 
 use godot_ffi as sys;
-
+use godot_ffi::SysPtr;
 use sys::{static_assert_eq_size_align, VariantType};
 
 use crate::builtin::{Callable, NodePath, StringName, Variant};
@@ -276,6 +276,29 @@ impl<T: GodotClass> Gd<T> {
     /// runtime condition to check against.
     pub fn is_instance_valid(&self) -> bool {
         self.raw.is_instance_valid()
+    }
+
+    /// Returns the dynamic class name of the object.
+    ///
+    /// This method retrieves the class name of the object at runtime, which can be different from [`T::class_name()`] if derived
+    /// classes are involved.
+    // TODO optimize performance. maybe combine with RTTI somehow?
+    pub fn dynamic_class(&self) -> ClassName {
+        let class_name = unsafe {
+            StringName::new_with_string_uninit(|ptr| {
+                let success = sys::interface_fn!(object_get_class_name)(
+                    self.obj_sys().as_const(),
+                    sys::get_library(),
+                    ptr,
+                );
+
+                let success = sys::conv::bool_from_sys(success);
+                assert!(success, "failed to get class name for object {self:?}");
+            })
+        };
+
+        ClassName::find_by_name(&class_name)
+            .unwrap_or_else(|| panic!("Could not find class name '{class_name}'; type {self:?}"))
     }
 
     /// **Upcast:** convert into a smart pointer to a base class. Always succeeds.

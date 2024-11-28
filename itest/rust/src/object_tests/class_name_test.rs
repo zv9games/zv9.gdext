@@ -48,6 +48,15 @@ fn class_name_dynamic() {
     assert_eq!(a.to_cow_str(), Cow::<'static, str>::Owned("A".to_string()));
 }
 
+#[itest]
+fn class_name_find_by_name() {
+    let a_by_name = ClassName::find_by_name(&StringName::from("A")).unwrap();
+    let a_static = A::class_name();
+
+    assert_eq!(a_by_name, a_static);
+    assert_eq!(a_by_name.to_string(), "A");
+}
+
 #[cfg(since_api = "4.4")]
 #[itest]
 fn class_name_dynamic_unicode() {

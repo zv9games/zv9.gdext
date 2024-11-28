@@ -867,6 +867,22 @@ fn object_try_to_unique() {
     assert_eq!(ref_count, 2);
 }
 
+#[itest]
+fn object_dynamic_class() {
+    use godot::obj::GodotClass as _;
+
+    let refc = RefCounted::new_gd().upcast::<Object>();
+    let node = Node3D::new_alloc().upcast::<Object>();
+    let obj = ObjPayload::new_alloc().upcast::<Object>();
+
+    assert_eq!(refc.dynamic_class(), RefCounted::class_name());
+    assert_eq!(node.dynamic_class(), Node3D::class_name());
+    assert_eq!(obj.dynamic_class(), ObjPayload::class_name());
+
+    node.free();
+    obj.free();
+}
+
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(GodotClass)]

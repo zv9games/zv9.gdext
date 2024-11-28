@@ -4,6 +4,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
+
 use std::any::TypeId;
 use std::borrow::Cow;
 use std::cell::OnceCell;
@@ -135,6 +136,25 @@ impl ClassName {
         });
 
         ClassName { global_index }
+    }
+
+    /// Inefficient lookup by name.
+    // API design: if needed, consider faster method.
+    #[doc(hidden)]
+    pub fn find_by_name(name: &StringName) -> Option<Self> {
+        let cached_names = CLASS_NAMES.lock();
+
+        let index = cached_names.iter().position(|entry| {
+            let class_sname = entry.godot_str.get().expect(
+                "uninitialized class name; was ClassName::find_by_name() called too early?",
+            );
+
+            class_sname == name
+        })?;
+
+        Some(Self {
+            global_index: index as u16,
+        })
     }
 
     #[doc(hidden)]
