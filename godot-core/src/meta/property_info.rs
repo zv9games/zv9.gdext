@@ -280,6 +280,13 @@ impl PropertyHintInfo {
         }
     }
 
+    pub fn type_name_range<T: GodotType + std::fmt::Display>(lower: T, upper: T) -> Self {
+        Self {
+            hint: PropertyHint::RANGE,
+            hint_string: GString::from(format!("{lower},{upper}")), // also valid for <4.3.
+        }
+    }
+
     /// Use for `#[var]` properties -- [`PROPERTY_HINT_ARRAY_TYPE`](PropertyHint::ARRAY_TYPE) with the type name as hint string.
     pub fn var_array_element<T: ArrayElement>() -> Self {
         Self {

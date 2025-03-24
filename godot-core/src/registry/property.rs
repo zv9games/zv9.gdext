@@ -483,6 +483,12 @@ mod export_impls {
             impl_property_by_godot_convert!(@property $Ty);
         };
 
+        ($Ty:ty, limit_range) => {
+            impl_property_by_godot_convert!(@property $Ty);
+            impl_property_by_godot_convert!(@export_range $Ty);
+            impl_property_by_godot_convert!(@builtin $Ty);
+        };
+
         ($Ty:ty) => {
             impl_property_by_godot_convert!(@property $Ty);
             impl_property_by_godot_convert!(@export $Ty);
@@ -505,6 +511,14 @@ mod export_impls {
             impl Export for $Ty {
                 fn export_hint() -> PropertyHintInfo {
                     PropertyHintInfo::type_name::<$Ty>()
+                }
+            }
+        };
+
+        (@export_range $Ty:ty) => {
+            impl Export for $Ty {
+                fn export_hint() -> PropertyHintInfo {
+                    PropertyHintInfo::type_name_range(<$Ty>::MIN, <$Ty>::MAX)
                 }
             }
         };
@@ -570,16 +584,14 @@ mod export_impls {
     // then the property will just round the value or become inf.
     impl_property_by_godot_convert!(f32);
 
-    // Godot uses i64 internally for integers, and if Godot tries to pass an invalid integer into a property
-    // accepting one of the below values then rust will panic. In the editor this will appear as the property
-    // failing to be set to a value and an error printed in the console. During runtime this will crash the
-    // program and print the panic from rust stating that the property cannot store the value.
-    impl_property_by_godot_convert!(i32);
-    impl_property_by_godot_convert!(i16);
-    impl_property_by_godot_convert!(i8);
-    impl_property_by_godot_convert!(u32);
-    impl_property_by_godot_convert!(u16);
-    impl_property_by_godot_convert!(u8);
+    // Godot uses i64 internally for integers. We use the @export_range hints to limit the integers to a sub-range of i64, so the editor UI
+    // can only set the respective values. If values are assigned in other ways (e.g. GDScript), a panic may occur, causing a Godot error.
+    impl_property_by_godot_convert!(i32, limit_range);
+    impl_property_by_godot_convert!(i16, limit_range);
+    impl_property_by_godot_convert!(i8, limit_range);
+    impl_property_by_godot_convert!(u32, limit_range);
+    impl_property_by_godot_convert!(u16, limit_range);
+    impl_property_by_godot_convert!(u8, limit_range);
 
     // Callables and Signals are useless when exported to the editor, so we only need to make them available as
     // properties.

@@ -8,7 +8,7 @@
 use std::fmt;
 
 use godot_ffi as sys;
-use godot_ffi::{ffi_methods, GdextBuild, GodotFfi};
+use sys::{ffi_methods, GodotFfi};
 
 use crate::builtin::inner;
 
@@ -143,7 +143,7 @@ impl NodePath {
     #[doc(alias = "slice")]
     pub fn subpath(&self, begin: i32, exclusive_end: i32) -> NodePath {
         // Polyfill for bug https://github.com/godotengine/godot/pull/100954, fixed in 4.4.
-        let begin = if GdextBuild::since_api("4.4") {
+        let begin = if sys::GdextBuild::since_api("4.4") {
             begin
         } else {
             let name_count = self.get_name_count() as i32;
