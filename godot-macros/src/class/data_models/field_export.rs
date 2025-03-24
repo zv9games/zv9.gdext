@@ -5,12 +5,11 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+use crate::util::{KvParser, ListParser};
+use crate::ParseResult;
 use proc_macro2::{Ident, Span, TokenStream};
 use quote::quote;
 use std::collections::{HashMap, HashSet};
-
-use crate::util::{KvParser, ListParser};
-use crate::ParseResult;
 
 pub struct FieldExport {
     pub export_type: ExportType,
@@ -18,9 +17,12 @@ pub struct FieldExport {
 }
 
 impl FieldExport {
-    pub(crate) fn new_from_kv(parser: &mut KvParser) -> ParseResult<Self> {
+    pub(crate) fn new_from_kv(
+        parser: &mut KvParser,
+        field_ty: venial::TypeExpr,
+    ) -> ParseResult<Self> {
         let span = parser.span();
-        let export_type = ExportType::new_from_kv(parser)?;
+        let export_type = ExportType::new_from_kv(parser, field_ty)?;
         Ok(Self { export_type, span })
     }
 
@@ -46,6 +48,7 @@ pub enum ExportType {
     /// ### Property hints
     /// - `RANGE`
     Range {
+        field_ty: venial::TypeExpr,
         min: TokenStream,
         max: TokenStream,
         step: TokenStream,
@@ -149,9 +152,12 @@ impl ExportType {
     /// - `@export_{flags/enum}("elem1", "elem2:key2", ...)`
     ///   becomes
     ///   `#[export(flags/enum = (elem1, elem2 = key2, ...))]`
-    pub(crate) fn new_from_kv(parser: &mut KvParser) -> ParseResult<Self> {
+    pub(crate) fn new_from_kv(
+        parser: &mut KvParser,
+        field_ty: venial::TypeExpr,
+    ) -> ParseResult<Self> {
         if let Some(list_parser) = parser.handle_list("range")? {
-            return Self::new_range_list(list_parser);
+            return Self::new_range_list(list_parser, field_ty);
         }
 
         if let Some(list_parser) = parser.handle_list("enum")? {
@@ -273,7 +279,7 @@ impl ExportType {
         Ok(Self::Default)
     }
 
-    fn new_range_list(mut parser: ListParser) -> ParseResult<Self> {
+    fn new_range_list(mut parser: ListParser, field_ty: venial::TypeExpr) -> ParseResult<Self> {
         const FLAG_OPTIONS: [&str; 7] = [
             "or_greater",
             "or_less",
@@ -287,6 +293,7 @@ impl ExportType {
 
         let min = parser.next_expr()?;
         let max = parser.next_expr()?;
+
         // If there is a next element, and it is a literal, we take its tokens directly.
         let step = if parser.peek().is_some_and(|kv| kv.as_literal().is_ok()) {
             let value = parser
@@ -303,6 +310,7 @@ impl ExportType {
         loop {
             let key_maybe_value =
                 parser.next_allowed_key_optional_value(&FLAG_OPTIONS, &KV_OPTIONS)?;
+
             match key_maybe_value {
                 Some((option, None)) => {
                     flags.insert(option.to_string());
@@ -317,6 +325,7 @@ impl ExportType {
         parser.finish()?;
 
         Ok(Self::Range {
+            field_ty,
             min,
             max,
             step,
@@ -384,11 +393,18 @@ impl ExportType {
 }
 
 macro_rules! quote_export_func {
-    ($function_name:ident($($tt:tt)*)) => {
+    ($function_name:ident ($($tt:tt)*) ) => {
         Some(quote! {
             ::godot::register::property::export_info_functions::$function_name($($tt)*)
         })
-    }
+    };
+
+    // Use [ ] for generic args due to parsing ambiguity with ::< > turbofish.
+    ($function_name:ident [ $($generic_args:tt)* ] ($($tt:tt)*) ) => {
+        Some(quote! {
+            ::godot::register::property::export_info_functions::$function_name::< $($generic_args)* >($($tt)*)
+        })
+    };
 }
 
 impl ExportType {
@@ -397,6 +413,7 @@ impl ExportType {
             Self::Default => None,
 
             Self::Range {
+                field_ty,
                 min,
                 max,
                 step,
@@ -414,9 +431,11 @@ impl ExportType {
                 } else {
                     quote! { None }
                 };
+
                 let export_func = quote_export_func! {
-                    export_range(#min, #max, #step, #or_greater, #or_less, #exp, #radians_as_degrees || #radians, #degrees, #hide_slider, #suffix)
+                    export_range [ #field_ty ] (#min, #max, #step, #or_greater, #or_less, #exp, #radians_as_degrees || #radians, #degrees, #hide_slider, #suffix)
                 }?;
+
                 let deprecation_warning = if *radians {
                     // For some reason, rustfmt formatting like this.  Probably a bug.
                     // See https://github.com/godot-rust/gdext/pull/783#discussion_r1669105958 and
@@ -428,6 +447,7 @@ impl ExportType {
                 } else {
                     quote! { #export_func }
                 };
+
                 Some(quote! {
                     #deprecation_warning
                 })

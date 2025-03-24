@@ -226,7 +226,9 @@ pub mod export_info_functions {
     use crate::builtin::GString;
     use crate::global::PropertyHint;
     use crate::meta::PropertyHintInfo;
+    use crate::registry::property::Export;
     use crate::sys;
+    use std::fmt;
     use std::fmt::Write;
 
     /// Turn a list of variables into a comma separated string containing only the identifiers corresponding
@@ -261,17 +263,17 @@ pub mod export_info_functions {
     /// #[derive(GodotClass)]
     /// #[class(init, base=Node)]
     /// struct MyClassWithRangedValues {
-    ///     #[export(range=(0.0, 400.0, 1.0, or_greater, suffix="px"))]
+    ///     #[export(range=(0, 400, 1, or_greater, suffix="px"))]
     ///     icon_width: i32,
     ///     #[export(range=(-180.0, 180.0, degrees))]
     ///     angle: f32,
     /// }
     /// ```
     #[allow(clippy::too_many_arguments)]
-    pub fn export_range(
-        min: f64,
-        max: f64,
-        step: Option<f64>,
+    pub fn export_range<T: Export + fmt::Display>(
+        min: T,
+        max: T,
+        step: Option<T>,
         or_greater: bool,
         or_less: bool,
         exp: bool,
