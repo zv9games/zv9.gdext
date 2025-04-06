@@ -86,8 +86,8 @@ fn make_signal_collection(
             // Only clone Gd<T> here; until this point, we hold a reference. Avoids work if no signal is actually created.
             // (For Node-derived objects, Gd::clone() is just a pointer copy, so that doesn't matter in most cases).
             #[doc = #provider_docs]
-            pub fn #signal_name(&'c mut self) -> #individual_struct_name<'c> {
-            // pub fn #signal_name(&mut self) -> #individual_struct_name<'_> {
+            // pub fn #signal_name(&'c mut self) -> #individual_struct_name<'c> {
+            pub fn #signal_name(&mut self) -> #individual_struct_name<'_> {
                 #individual_struct_name {
                     typed: TypedSignal::__from_erased(&mut self.__erased_obj, #signal_name_str)
                 }

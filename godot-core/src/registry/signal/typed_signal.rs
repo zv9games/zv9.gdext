@@ -61,16 +61,16 @@ impl<C: WithBaseField> IntoSignalObj<C> for &mut C {
 ///
 /// # More information
 /// See the [Signals](https://godot-rust.github.io/book/register/signals.html) chapter in the book for a detailed introduction and examples.
-pub struct TypedSignal<'c, Ps> {
+pub struct TypedSignal<'e,'c:'e, Ps> {
     /// In Godot, valid signals (unlike funcs) are _always_ declared in a class and become part of each instance. So there's always an object.
-    object: &'c mut ErasedSignalObj<'c>,
+    object: &'e mut ErasedSignalObj<'c>,
     name: Cow<'static, str>,
     _signature: PhantomData<Ps>,
 }
 
-impl<'c, Ps: meta::ParamTuple> TypedSignal<'c, Ps> {
+impl<'e,'c, Ps: meta::ParamTuple> TypedSignal<'e, 'c, Ps> {
     #[doc(hidden)]
-    pub fn __from_erased(object: &'c mut ErasedSignalObj<'c>, name: &'static str) -> Self {
+    pub fn __from_erased(object: &'e mut ErasedSignalObj<'c>, name: &'static str) -> Self {
         Self {
             object,
             name: Cow::Borrowed(name),

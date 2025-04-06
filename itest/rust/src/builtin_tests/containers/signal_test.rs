@@ -80,6 +80,7 @@ fn signal_symbols_internal() {
 #[itest]
 fn signal_symbols_external() {
     let mut emitter = Emitter::new_alloc();
+    let emitter_copy = emitter.clone();
     let mut sig = emitter.signals().signal_int();
 
     // Local function; deliberately use a !Send type.
@@ -92,7 +93,7 @@ fn signal_symbols_external() {
     }
 
     // Self-modifying method.
-    sig.connect(&emitter, Emitter::self_receive);
+    sig.connect(&emitter_copy, Emitter::self_receive);
 
     // Connect to other object.
     let receiver = Receiver::new_alloc();
