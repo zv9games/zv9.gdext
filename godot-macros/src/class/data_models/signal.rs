@@ -212,9 +212,10 @@ impl SignalCollection {
             //
             // However, it would still lead to a compile error when declaring the individual signal struct `pub` (or any other
             // visibility that exceeds the class visibility). So, we can as well declare the visibility here.
-            #vis_marker fn #signal_name(self) -> #individual_struct_name<'c> {
+            #vis_marker fn #signal_name(&mut self) -> #individual_struct_name<'c> {
                 #individual_struct_name {
-                    typed: ::godot::register::TypedSignal::__from_erased(&mut self.__erased_obj, #signal_name_str)
+                    // typed: ::godot::register::TypedSignal::__from_erased(&mut self.__erased_obj, #signal_name_str)
+                    typed: todo!()//::godot::register::TypedSignal::__from_erased(&mut self.__erased_obj, #signal_name_str)
                 }
             }
         });

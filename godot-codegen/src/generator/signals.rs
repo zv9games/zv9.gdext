@@ -89,7 +89,7 @@ fn make_signal_collection(
             // pub fn #signal_name(&'c mut self) -> #individual_struct_name<'c> {
             pub fn #signal_name(&mut self) -> #individual_struct_name<'_> {
                 #individual_struct_name {
-                    typed: TypedSignal::__from_erased(&mut self.__erased_obj, #signal_name_str)
+                    typed: todo!()//TypedSignal::__from_erased(self.__erased_obj, #signal_name_str)
                 }
             }
         }
@@ -102,11 +102,14 @@ fn make_signal_collection(
 
     quote! {
         #[doc = #collection_docs]
-        pub struct #collection_struct_name<'c> {
+        pub struct #collection_struct_name<'c>
+        where Self: 'c
+        {
             __erased_obj: crate::registry::signal::ErasedSignalObj<'c>,
         }
 
-        impl<'c> #collection_struct_name<'c> {
+        impl<'c> #collection_struct_name<'c>
+        {
             #( #provider_methods )*
         }
 
