@@ -28,8 +28,8 @@ pub struct SignalDefinition {
 struct SignalDetails<'a> {
     /// `fn my_signal(i: i32, s: GString)` -- simplified from original declaration.
     fn_signature: &'a venial::Function,
-    /// `MyClass`
-    class_name: &'a Ident,
+    /// `MyClass` - currently unused.
+    //class_name: &'a Ident,
     /// `i32`, `GString`
     param_types: Vec<venial::TypeExpr>,
     /// `i`, `s`
@@ -85,7 +85,6 @@ impl<'a> SignalDetails<'a> {
 
         Ok(Self {
             fn_signature,
-            class_name,
             param_types,
             param_names,
             param_names_str,
@@ -215,7 +214,7 @@ impl SignalCollection {
             // visibility that exceeds the class visibility). So, we can as well declare the visibility here.
             #vis_marker fn #signal_name(self) -> #individual_struct_name<'c> {
                 #individual_struct_name {
-                    typed: ::godot::register::TypedSignal::new(self.__internal_obj, #signal_name_str)
+                    typed: ::godot::register::TypedSignal::__from_erased(&mut self.__erased_obj, #signal_name_str)
                 }
             }
         });
@@ -233,7 +232,6 @@ fn make_signal_individual_struct(details: &SignalDetails) -> TokenStream {
     let emit_params = &details.fn_signature.params;
 
     let SignalDetails {
-        class_name,
         param_names,
         param_tuple,
         signal_cfg_attrs,
@@ -260,9 +258,9 @@ fn make_signal_individual_struct(details: &SignalDetails) -> TokenStream {
         #(#signal_cfg_attrs)*
         #[allow(non_camel_case_types)]
         #[doc(hidden)] // Signal struct is hidden, but the method returning it is not (IDE completion).
-        #vis_marker struct #individual_struct_name<'a> {
+        #vis_marker struct #individual_struct_name<'c> {
             #[doc(hidden)]
-            typed: ::godot::register::TypedSignal<'a, #class_name, #param_tuple>,
+            typed: ::godot::register::TypedSignal<'c, #param_tuple>,
         }
 
         // Concrete convenience API is macro-based; many parts are delegated to TypedSignal via Deref/DerefMut.
@@ -275,7 +273,7 @@ fn make_signal_individual_struct(details: &SignalDetails) -> TokenStream {
 
         #(#signal_cfg_attrs)*
         impl<'c> std::ops::Deref for #individual_struct_name<'c> {
-            type Target = ::godot::register::TypedSignal<'c, #class_name, #param_tuple>;
+            type Target = ::godot::register::TypedSignal<'c, #param_tuple>;
 
             fn deref(&self) -> &Self::Target {
                 &self.typed
@@ -305,9 +303,8 @@ fn make_signal_collection(class_name: &Ident, collection: SignalCollection) -> O
         #[allow(non_camel_case_types)]
         #[doc(hidden)] // Only on struct, not methods, to allow completion in IDEs.
         pub struct #collection_struct_name<'c> {
-            // To allow external call in the future (given Gd<T>, not self), this could be an enum with either BaseMut or &mut Gd<T>/&mut T.
             #[doc(hidden)] // Necessary because it's in the same scope as the user-defined class, so appearing in IDE completion.
-            __internal_obj: ::godot::register::UserSignalObj<'c, #class_name>
+            __erased_obj: ::godot::register::ErasedSignalObj<'c>,
         }
 
         impl<'c> #collection_struct_name<'c> {
@@ -316,21 +313,22 @@ fn make_signal_collection(class_name: &Ident, collection: SignalCollection) -> O
 
         impl ::godot::obj::WithSignals for #class_name {
             type SignalCollection<'c> = #collection_struct_name<'c>;
-            #[doc(hidden)]
-            type __SignalObject<'c> = ::godot::register::UserSignalObj<'c, Self>;
 
             #[doc(hidden)]
             fn __signals_from_external(external: &mut Gd<Self>) -> Self::SignalCollection<'_> {
                 Self::SignalCollection {
-                    __internal_obj: ::godot::register::UserSignalObj::External { gd: external.clone() }
+                    __erased_obj: ::godot::register::ErasedSignalObj::from_external(external),
                 }
             }
         }
 
         impl ::godot::obj::WithUserSignals for #class_name {
+            // Can currently not be a default implementation, because self.to_gd() being passed to __signals_from_external()
+            // will not upheld the lifetime chain (rustc doesn't know that the Gd doesn't actually need to be alive).
             fn signals(&mut self) -> Self::SignalCollection<'_> {
+                //let mut internal = ::godot::obj::WithBaseField::to_gd(self);
                 Self::SignalCollection {
-                    __internal_obj: ::godot::register::UserSignalObj::Internal { obj_mut: self }
+                    __erased_obj: ::godot::register::ErasedSignalObj::from_internal(self),
                 }
             }
         }

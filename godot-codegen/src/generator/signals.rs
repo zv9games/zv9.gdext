@@ -83,10 +83,13 @@ fn make_signal_collection(
 
         quote! {
             // Important to return lifetime 'c here, not '_.
+            // Only clone Gd<T> here; until this point, we hold a reference. Avoids work if no signal is actually created.
+            // (For Node-derived objects, Gd::clone() is just a pointer copy, so that doesn't matter in most cases).
             #[doc = #provider_docs]
-            pub fn #signal_name(&mut self) -> #individual_struct_name<'c> {
+            pub fn #signal_name(&'c mut self) -> #individual_struct_name<'c> {
+            // pub fn #signal_name(&mut self) -> #individual_struct_name<'_> {
                 #individual_struct_name {
-                    typed: TypedSignal::new(self.__gd.clone(), #signal_name_str)
+                    typed: TypedSignal::__from_erased(&mut self.__erased_obj, #signal_name_str)
                 }
             }
         }
@@ -100,7 +103,7 @@ fn make_signal_collection(
     quote! {
         #[doc = #collection_docs]
         pub struct #collection_struct_name<'c> {
-            __gd: &'c mut Gd<#class_name>,
+            __erased_obj: crate::registry::signal::ErasedSignalObj<'c>,
         }
 
         impl<'c> #collection_struct_name<'c> {
@@ -109,13 +112,11 @@ fn make_signal_collection(
 
         impl crate::obj::WithSignals for #class_name {
             type SignalCollection<'c> = #collection_struct_name<'c>;
-            #[doc(hidden)]
-            type __SignalObject<'c> = Gd<#class_name>;
 
             #[doc(hidden)]
             fn __signals_from_external(external: &mut Gd<Self>) -> Self::SignalCollection<'_> {
                 Self::SignalCollection {
-                    __gd: external,
+                    __erased_obj: crate::registry::signal::ErasedSignalObj::from_external(external),
                 }
             }
         }
@@ -132,15 +133,13 @@ fn make_signal_individual_struct(signal: &ClassSignal, params: &SignalParams) ->
         ..
     } = params;
 
-    let class_name = &signal.surrounding_class;
-    let class_ty = quote! { #class_name };
     let param_tuple = quote! { ( #type_list ) };
     let typed_name = format_ident!("Typed{}", individual_struct_name);
 
     // Embedded in `mod signals`.
     quote! {
         // Reduce tokens to parse by reusing this type definitions.
-        type #typed_name<'c> = TypedSignal<'c, #class_ty, #param_tuple>;
+        type #typed_name<'c> = TypedSignal<'c, #param_tuple>;
 
         pub struct #individual_struct_name<'c> {
            typed: #typed_name<'c>,

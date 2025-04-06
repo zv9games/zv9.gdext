@@ -7,9 +7,9 @@
 
 use crate::builtin::{Callable, GString, Variant};
 use crate::classes::object::ConnectFlags;
-use crate::meta;
-use crate::obj::{bounds, Bounds, Gd, GodotClass, WithSignals};
+use crate::obj::{bounds, Bounds, Gd, GodotClass};
 use crate::registry::signal::{SignalReceiver, TypedSignal};
+use crate::{classes, meta};
 
 /// Type-state builder for customizing signal connections.
 ///
@@ -54,8 +54,8 @@ use crate::registry::signal::{SignalReceiver, TypedSignal};
 /// - [`done`][Self::done]: Finalize the connection. Consumes the builder and registers the signal with Godot.
 ///
 #[must_use]
-pub struct ConnectBuilder<'ts, 'c, CSig: WithSignals, CRcv, Ps, GodotFn> {
-    parent_sig: &'ts mut TypedSignal<'c, CSig, Ps>,
+pub struct ConnectBuilder<'ts, 'c, CRcv, Ps, GodotFn> {
+    parent_sig: &'ts mut TypedSignal<'c, Ps>,
     data: BuilderData,
 
     // Type-state data.
@@ -63,8 +63,8 @@ pub struct ConnectBuilder<'ts, 'c, CSig: WithSignals, CRcv, Ps, GodotFn> {
     godot_fn: GodotFn,
 }
 
-impl<'ts, 'c, CSig: WithSignals, Ps: meta::ParamTuple> ConnectBuilder<'ts, 'c, CSig, (), Ps, ()> {
-    pub(super) fn new(parent_sig: &'ts mut TypedSignal<'c, CSig, Ps>) -> Self {
+impl<'ts, 'c, Ps: meta::ParamTuple> ConnectBuilder<'ts, 'c, (), Ps, ()> {
+    pub(super) fn new(parent_sig: &'ts mut TypedSignal<'c, Ps>) -> Self {
         ConnectBuilder {
             parent_sig,
             data: BuilderData::default(),
@@ -80,7 +80,6 @@ impl<'ts, 'c, CSig: WithSignals, Ps: meta::ParamTuple> ConnectBuilder<'ts, 'c, C
     ) -> ConnectBuilder<
         'ts,
         'c,
-        /* CSig = */ CSig,
         /* CRcv = */ (),
         /* Ps = */ Ps,
         /* GodotFn= */ impl FnMut(&[&Variant]) -> Result<Variant, ()> + 'static,
@@ -101,8 +100,11 @@ impl<'ts, 'c, CSig: WithSignals, Ps: meta::ParamTuple> ConnectBuilder<'ts, 'c, C
     }
 
     /// **Stage 1:** prepare for a method taking `self` (the class declaring the `#[signal]`).
-    pub fn object_self(self) -> ConnectBuilder<'ts, 'c, CSig, Gd<CSig>, Ps, ()> {
-        let receiver_obj: Gd<CSig> = self.parent_sig.receiver_object();
+    pub fn object_self<CRcv>(self) -> ConnectBuilder<'ts, 'c, Gd<CRcv>, Ps, ()>
+    where
+        CRcv: GodotClass + crate::obj::Inherits<classes::Object>, //WithUserSignals + ,
+    {
+        let receiver_obj: Gd<CRcv> = self.parent_sig.receiver_object().cast();
 
         ConnectBuilder {
             parent_sig: self.parent_sig,
@@ -113,10 +115,7 @@ impl<'ts, 'c, CSig: WithSignals, Ps: meta::ParamTuple> ConnectBuilder<'ts, 'c, C
     }
 
     /// **Stage 1:** prepare for a method taking any `Gd<T>` object.
-    pub fn object<C: GodotClass>(
-        self,
-        object: &Gd<C>,
-    ) -> ConnectBuilder<'ts, 'c, CSig, Gd<C>, Ps, ()> {
+    pub fn object<C: GodotClass>(self, object: &Gd<C>) -> ConnectBuilder<'ts, 'c, Gd<C>, Ps, ()> {
         ConnectBuilder {
             parent_sig: self.parent_sig,
             data: self.data,
@@ -126,9 +125,7 @@ impl<'ts, 'c, CSig: WithSignals, Ps: meta::ParamTuple> ConnectBuilder<'ts, 'c, C
     }
 }
 
-impl<'ts, 'c, CSig: WithSignals, CRcv: GodotClass, Ps: meta::ParamTuple>
-    ConnectBuilder<'ts, 'c, CSig, Gd<CRcv>, Ps, ()>
-{
+impl<'ts, 'c, CRcv: GodotClass, Ps: meta::ParamTuple> ConnectBuilder<'ts, 'c, Gd<CRcv>, Ps, ()> {
     /// **Stage 2:** method taking `&mut self`.
     pub fn method_mut<F>(
         self,
@@ -136,7 +133,6 @@ impl<'ts, 'c, CSig: WithSignals, CRcv: GodotClass, Ps: meta::ParamTuple>
     ) -> ConnectBuilder<
         'ts,
         'c,
-        /* CSig = */ CSig,
         /* CRcv: again reset to unit type, after object has been captured in closure. */
         (),
         /* Ps = */ Ps,
@@ -168,7 +164,6 @@ impl<'ts, 'c, CSig: WithSignals, CRcv: GodotClass, Ps: meta::ParamTuple>
     ) -> ConnectBuilder<
         'ts,
         'c,
-        /* CSig = */ CSig,
         /* CRcv: again reset to unit type, after object has been captured in closure. */
         (),
         /* Ps = */ Ps,
@@ -194,10 +189,9 @@ impl<'ts, 'c, CSig: WithSignals, CRcv: GodotClass, Ps: meta::ParamTuple>
     }
 }
 
-#[allow(clippy::needless_lifetimes)] // 'ts + 'c are used conditionally.
-impl<'ts, 'c, CSig, CRcv, Ps, GodotFn> ConnectBuilder<'ts, 'c, CSig, CRcv, Ps, GodotFn>
+#[allow(clippy::needless_lifetimes)] // 'ts is used conditionally.
+impl<'ts, 'c, CRcv, Ps, GodotFn> ConnectBuilder<'ts, 'c, CRcv, Ps, GodotFn>
 where
-    CSig: WithSignals,
     Ps: meta::ParamTuple,
     GodotFn: FnMut(&[&Variant]) -> Result<Variant, ()> + 'static,
 {
@@ -211,7 +205,6 @@ where
     ) -> ConnectBuilder<
         'ts,
         'c,
-        /* CSig = */ CSig,
         /* CRcv = */ CRcv,
         /* Ps = */ Ps,
         /* GodotFn = */ impl FnMut(&[&Variant]) -> Result<Variant, ()>,

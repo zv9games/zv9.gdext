@@ -12,6 +12,7 @@ use crate::meta::ClassName;
 use crate::obj::{bounds, Base, BaseMut, BaseRef, Bounds, Gd};
 use crate::storage::Storage;
 use godot_ffi as sys;
+use crate::classes;
 
 /// Makes `T` eligible to be managed by Godot and stored in [`Gd<T>`][crate::obj::Gd] pointers.
 ///
@@ -447,11 +448,6 @@ pub trait WithSignals: GodotClass {
     /// `'c` denotes the lifetime during which the class instance is borrowed and its signals can be modified.
     type SignalCollection<'c>;
 
-    /// Trait that allows [`TypedSignal`] to store a reference to the user object.
-    #[doc(hidden)]
-    #[expect(private_bounds)]
-    type __SignalObject<'c>: crate::registry::signal::SignalObj<Self>;
-
     /// Create from existing `Gd`, to enable `Gd::signals()`.
     ///
     /// Takes by reference and not value, to retain lifetime chain.
@@ -463,7 +459,9 @@ pub trait WithSignals: GodotClass {
 ///
 /// Allows to access signals from within the class, as `self.signals()`. This requires a `Base<T>` field.
 #[cfg(since_api = "4.2")]
-pub trait WithUserSignals: WithSignals + WithBaseField {
+pub trait WithUserSignals:
+    WithSignals + WithBaseField + Bounds<Declarer = bounds::DeclUser> + Inherits<classes::Object>
+{
     /// Access user-defined signals of the current object `self`.
     ///
     /// For classes that have at least one `#[signal]` defined, returns a collection of signal names. Each returned signal has a specialized

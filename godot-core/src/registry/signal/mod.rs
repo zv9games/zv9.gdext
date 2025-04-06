@@ -5,11 +5,14 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+mod any_signal_object;
 mod connect_builder;
 mod typed_signal;
 pub(crate) mod variadic;
 
+pub use any_signal_object::*;
 pub use connect_builder::*;
 pub use typed_signal::*;
 pub use variadic::SignalReceiver;
+
 // ParamTuple re-exported in crate::meta.

@@ -43,7 +43,7 @@ fn signal_basic_connect_emit() {
 
 // "Internal" means connect/emit happens from within the class, via self.signals().
 #[cfg(since_api = "4.2")]
-#[itest]
+#[itest(focus)]
 fn signal_symbols_internal() {
     let mut emitter = Emitter::new_alloc();
 
@@ -92,7 +92,7 @@ fn signal_symbols_external() {
     }
 
     // Self-modifying method.
-    sig.connect_self(Emitter::self_receive);
+    sig.connect(&emitter, Emitter::self_receive);
 
     // Connect to other object.
     let receiver = Receiver::new_alloc();
@@ -354,7 +354,8 @@ mod emitter {
         #[cfg(since_api = "4.2")]
         pub fn connect_signals_internal(&mut self, tracker: Rc<Cell<i64>>) {
             let mut sig = self.signals().signal_int();
-            sig.connect_self(Self::self_receive);
+            sig.connect(self, Self::self_receive);
+            // sig.connect_self(Self::self_receive);
             sig.connect_g(Self::self_receive_static);
             sig.connect_g(move |i| tracker.set(i));
         }
