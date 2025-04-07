@@ -7,7 +7,7 @@
 
 use crate::builtin::{Callable, Variant};
 use crate::classes::object::ConnectFlags;
-use crate::obj::{bounds, Bounds, Gd, GodotClass, WithBaseField};
+use crate::obj::{bounds, Bounds, Gd, GodotClass, WithBaseField, WithUserSignals};
 use crate::registry::signal::{
     make_callable_name, make_godot_fn, ConnectBuilder, ErasedSignalObj, SignalReceiver,
 };
@@ -188,23 +188,23 @@ impl<'c, Ps: meta::ParamTuple> TypedSignal<'c, Ps> {
     }
 }
 
-// impl<Ps: meta::ParamTuple> TypedSignal<'_, Ps> {
-//     /// Connect a method (member function) with `&mut self` as the first parameter.
-//     ///
-//     /// To connect to methods on other objects, use [`connect()`][Self::connect].  \
-//     /// If you need a `&self` receiver, cross-thread signals or connect flags, use [`connect_builder()`][Self::connect_builder].
-//     pub fn connect_self<F, C>(&mut self, mut function: F)
-//     where
-//         C: WithUserSignals,
-//         for<'c_rcv> F: SignalReceiver<&'c_rcv mut C, Ps>,
-//     {
-//         let mut gd = self.object.to_owned_object();
-//         let godot_fn = make_godot_fn(move |args| {
-//             let mut instance = gd.bind_mut();
-//             let instance = &mut *instance;
-//             function.call(instance, args);
-//         });
-//
-//         self.inner_connect_godot_fn::<F>(godot_fn);
-//     }
-// }
+impl<Ps: meta::ParamTuple> TypedSignal<'_, Ps> {
+    /// Connect a method (member function) with `&mut self` as the first parameter.
+    ///
+    /// To connect to methods on other objects, use [`connect()`][Self::connect].  \
+    /// If you need a `&self` receiver, cross-thread signals or connect flags, use [`connect_builder()`][Self::connect_builder].
+    pub fn connect_self<F, C>(&mut self, mut function: F)
+    where
+        C: WithUserSignals,
+        for<'c_rcv> F: SignalReceiver<&'c_rcv mut C, Ps>,
+    {
+        let mut gd = self.object.to_owned_object();
+        let godot_fn = make_godot_fn(move |args| {
+            let mut instance = gd.bind_mut();
+            let instance = &mut *instance;
+            function.call(instance, args);
+        });
+
+        self.inner_connect_godot_fn::<F>(godot_fn);
+    }
+}

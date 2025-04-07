@@ -227,15 +227,11 @@ fn signal_symbols_engine(ctx: &crate::framework::TestContext) {
     let mut node = Node::new_alloc();
     ctx.scene_tree.clone().add_child(&node);
 
-    // Deliberately declare here, because there was a bug with wrong lifetime, which would not compile due to early-dropped temporary.
     let mut signals_in_node = node.signals();
-    let mut renamed = signals_in_node.renamed();
-    let mut entered = signals_in_node.child_entered_tree();
 
-    let renamed_count = Rc::new(Cell::new(0));
+    let mut entered = signals_in_node.child_entered_tree();
     let entered_tracker = Rc::new(RefCell::new(None));
     {
-        let renamed_count = renamed_count.clone();
         let entered_tracker = entered_tracker.clone();
 
         entered
@@ -244,7 +240,12 @@ fn signal_symbols_engine(ctx: &crate::framework::TestContext) {
                 *entered_tracker.borrow_mut() = Some(node);
             })
             .done();
+    }
 
+    let mut renamed = signals_in_node.renamed();
+    let renamed_count = Rc::new(Cell::new(0));
+    {
+        let renamed_count = renamed_count.clone();
         renamed.connect_g(move || renamed_count.set(renamed_count.get() + 1));
     }
 
@@ -355,8 +356,8 @@ mod emitter {
         #[cfg(since_api = "4.2")]
         pub fn connect_signals_internal(&mut self, tracker: Rc<Cell<i64>>) {
             let mut sig = self.signals().signal_int();
-            sig.connect(self, Self::self_receive);
-            // sig.connect_self(Self::self_receive);
+            // sig.connect(self, Self::self_receive);
+            sig.connect_self(Self::self_receive);
             sig.connect_g(Self::self_receive_static);
             sig.connect_g(move |i| tracker.set(i));
         }
