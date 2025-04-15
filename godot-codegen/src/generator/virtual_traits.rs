@@ -35,7 +35,7 @@ pub fn make_virtual_methods_trait(
         #[allow(unused_variables)]
         #[allow(clippy::unimplemented)]
         #cfg_attributes
-        pub trait #trait_name: crate::obj::GodotClass<Base = #class_name> + crate::private::You_forgot_the_attribute__godot_api {
+        pub trait #trait_name: crate::obj::GodotClass<Base = #class_name> + crate::private::You_forgot_the_attribute__godot_api + Sized {
             #special_virtual_methods
             #( #virtual_method_fns )*
         }

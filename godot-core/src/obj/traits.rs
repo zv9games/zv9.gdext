@@ -25,8 +25,6 @@ use godot_ffi as sys;
     note = "see also: https://godot-rust.github.io/book/register/classes.html"
 )]
 pub trait GodotClass: Bounds + 'static
-where
-    Self: Sized,
 {
     /// The immediate superclass of `T`. This is always a Godot engine class.
     type Base: GodotClass; // not EngineClass because it can be ()
@@ -264,7 +262,7 @@ pub trait IndexEnum: EngineEnum {
     note = "a base field is required to access the base from within `self`, as well as for #[signal], #[rpc] and #[func(virtual)]",
     note = "see also: https://godot-rust.github.io/book/register/classes.html#the-base-field"
 )]
-pub trait WithBaseField: GodotClass + Bounds<Declarer = bounds::DeclUser> {
+pub trait WithBaseField: GodotClass + Bounds<Declarer = bounds::DeclUser> + Sized {
     /// Returns the `Gd` pointer containing this object.
     ///
     /// This is intended to be stored or passed to engine methods. You cannot call `bind()` or `bind_mut()` on it, while the method
@@ -441,7 +439,7 @@ pub trait WithUserSignals: WithSignals + WithBaseField {}
 ///
 /// User-defined classes with `#[signal]` additionally implement [`WithUserSignals`].
 #[cfg(since_api = "4.2")]
-pub trait WithSignals: GodotClass {
+pub trait WithSignals: GodotClass + Sized  {
     /// The associated struct listing all signals of this class.
     ///
     /// `'c` denotes the lifetime during which the class instance is borrowed and its signals can be modified.
@@ -493,7 +491,7 @@ pub trait WithUserSignals: WithSignals + WithBaseField {
 }
 
 /// Extension trait for all reference-counted classes.
-pub trait NewGd: GodotClass {
+pub trait NewGd: GodotClass+ Sized  {
     /// Return a new, ref-counted `Gd` containing a default-constructed instance.
     ///
     /// `MyClass::new_gd()` is equivalent to `Gd::<MyClass>::default()`.
@@ -510,7 +508,7 @@ where
 }
 
 /// Extension trait for all manually managed classes.
-pub trait NewAlloc: GodotClass {
+pub trait NewAlloc: GodotClass + Sized {
     /// Return a new, manually-managed `Gd` containing a default-constructed instance.
     ///
     /// The result must be manually managed, e.g. by attaching it to the scene tree or calling `free()` after usage.
@@ -561,7 +559,7 @@ pub mod cap {
         note = "to opt out, use `#[class(no_init)]`",
         note = "see also: https://godot-rust.github.io/book/register/constructors.html"
     )]
-    pub trait GodotDefault: GodotClass {
+    pub trait GodotDefault: GodotClass+ Sized  {
         /// Provides a default smart pointer instance.
         ///
         /// Semantics:

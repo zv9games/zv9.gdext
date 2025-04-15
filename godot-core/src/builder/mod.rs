@@ -13,7 +13,7 @@ mod method;
 /// Class builder to store state for registering a class with Godot.
 ///
 /// In the future this will be used, but for now it's a dummy struct.
-pub struct ClassBuilder<C> {
+pub struct ClassBuilder<C: ?Sized> {
     _c: PhantomData<C>,
 }
 
