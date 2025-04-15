@@ -94,7 +94,7 @@ use crate::{classes, out};
 /// [`Object`]: classes::Object
 /// [`RefCounted`]: classes::RefCounted
 #[repr(C)] // must be layout compatible with engine classes
-pub struct Gd<T: GodotClass> {
+pub struct Gd<T: GodotClass + ?Sized> {
     // Note: `opaque` has the same layout as GDExtensionObjectPtr == Object* in C++, i.e. the bytes represent a pointer
     // To receive a GDExtensionTypePtr == GDExtensionObjectPtr* == Object**, we need to get the address of this
     // Hence separate sys() for GDExtensionTypePtr, and obj_sys() for GDExtensionObjectPtr.

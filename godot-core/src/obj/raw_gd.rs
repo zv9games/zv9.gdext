@@ -27,7 +27,7 @@ use crate::{classes, out};
 /// depending on whether you need a nullable object pointer or not.
 #[repr(C)]
 #[doc(hidden)]
-pub struct RawGd<T: GodotClass> {
+pub struct RawGd<T: GodotClass + ?Sized> {
     pub(super) obj: *mut T,
 
     // Must not be changed after initialization.
@@ -82,7 +82,9 @@ impl<T: GodotClass> RawGd<T> {
     pub(super) unsafe fn from_obj_sys(obj: sys::GDExtensionObjectPtr) -> Self {
         Self::from_obj_sys_weak(obj).with_inc_refcount()
     }
+}
 
+impl<T: GodotClass + ?Sized> RawGd<T> {
     /// Returns `self` but with initialized ref-count.
     fn with_inc_refcount(mut self) -> Self {
         // Note: use init_ref and not inc_ref, since this might be the first reference increment.
@@ -641,7 +643,7 @@ impl<T: GodotClass> GodotNullableFfi for RawGd<T> {
 ///
 /// * If the held object is manually-managed, **nothing happens**.
 ///   To destroy manually-managed `RawGd` pointers, you need to call [`crate::obj::Gd::free()`].
-impl<T: GodotClass> Drop for RawGd<T> {
+impl<T: GodotClass + ?Sized> Drop for RawGd<T> {
     fn drop(&mut self) {
         // No-op for manually managed objects
 

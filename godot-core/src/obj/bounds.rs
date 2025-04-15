@@ -161,11 +161,11 @@ pub trait Memory: Sealed {}
 pub trait DynMemory: Sealed {
     /// Initialize reference counter
     #[doc(hidden)]
-    fn maybe_init_ref<T: GodotClass>(obj: &mut RawGd<T>);
+    fn maybe_init_ref<T: GodotClass + ?Sized>(obj: &mut RawGd<T>);
 
     /// If ref-counted, then increment count
     #[doc(hidden)]
-    fn maybe_inc_ref<T: GodotClass>(obj: &mut RawGd<T>);
+    fn maybe_inc_ref<T: GodotClass + ?Sized>(obj: &mut RawGd<T>);
 
     /// If ref-counted, then decrement count. Returns `true` if the count hit 0 and the object can be
     /// safely freed.
@@ -181,7 +181,7 @@ pub trait DynMemory: Sealed {
     /// then the reference count must either be incremented before it hits 0, or some [`Gd`] referencing
     /// this object must be forgotten.
     #[doc(hidden)]
-    unsafe fn maybe_dec_ref<T: GodotClass>(obj: &mut RawGd<T>) -> bool;
+    unsafe fn maybe_dec_ref<T: GodotClass + ?Sized>(obj: &mut RawGd<T>) -> bool;
 
     /// Check if ref-counted, return `None` if information is not available (dynamic and obj dead)
     #[doc(hidden)]
@@ -207,7 +207,7 @@ pub struct MemRefCounted {}
 impl Sealed for MemRefCounted {}
 impl Memory for MemRefCounted {}
 impl DynMemory for MemRefCounted {
-    fn maybe_init_ref<T: GodotClass>(obj: &mut RawGd<T>) {
+    fn maybe_init_ref<T: GodotClass + ?Sized>(obj: &mut RawGd<T>) {
         out!("  MemRefc::init  <{}>", std::any::type_name::<T>());
         if obj.is_null() {
             return;
@@ -225,7 +225,7 @@ impl DynMemory for MemRefCounted {
         assert!(success, "init_ref() failed");*/
     }
 
-    fn maybe_inc_ref<T: GodotClass>(obj: &mut RawGd<T>) {
+    fn maybe_inc_ref<T: GodotClass + ?Sized>(obj: &mut RawGd<T>) {
         out!("  MemRefc::inc   <{}>", std::any::type_name::<T>());
         if obj.is_null() {
             return;
@@ -236,7 +236,7 @@ impl DynMemory for MemRefCounted {
         });
     }
 
-    unsafe fn maybe_dec_ref<T: GodotClass>(obj: &mut RawGd<T>) -> bool {
+    unsafe fn maybe_dec_ref<T: GodotClass + ?Sized>(obj: &mut RawGd<T>) -> bool {
         out!("  MemRefc::dec   <{}>", std::any::type_name::<T>());
         if obj.is_null() {
             return false;
@@ -270,14 +270,14 @@ impl DynMemory for MemRefCounted {
 pub struct MemDynamic {}
 impl MemDynamic {
     /// Check whether dynamic type is ref-counted.
-    fn inherits_refcounted<T: GodotClass>(obj: &RawGd<T>) -> bool {
+    fn inherits_refcounted<T: GodotClass + ?Sized>(obj: &RawGd<T>) -> bool {
         obj.instance_id_unchecked()
             .is_some_and(|id| id.is_ref_counted())
     }
 }
 impl Sealed for MemDynamic {}
 impl DynMemory for MemDynamic {
-    fn maybe_init_ref<T: GodotClass>(obj: &mut RawGd<T>) {
+    fn maybe_init_ref<T: GodotClass + ?Sized>(obj: &mut RawGd<T>) {
         out!("  MemDyn::init  <{}>", std::any::type_name::<T>());
         if Self::inherits_refcounted(obj) {
             // Will call `RefCounted::init_ref()` which checks for liveness.
@@ -288,7 +288,7 @@ impl DynMemory for MemDynamic {
         }
     }
 
-    fn maybe_inc_ref<T: GodotClass>(obj: &mut RawGd<T>) {
+    fn maybe_inc_ref<T: GodotClass + ?Sized>(obj: &mut RawGd<T>) {
         out!("  MemDyn::inc   <{}>", std::any::type_name::<T>());
         if Self::inherits_refcounted(obj) {
             // Will call `RefCounted::reference()` which checks for liveness.
@@ -296,7 +296,7 @@ impl DynMemory for MemDynamic {
         }
     }
 
-    unsafe fn maybe_dec_ref<T: GodotClass>(obj: &mut RawGd<T>) -> bool {
+    unsafe fn maybe_dec_ref<T: GodotClass + ?Sized>(obj: &mut RawGd<T>) -> bool {
         out!("  MemDyn::dec   <{}>", std::any::type_name::<T>());
         if obj
             .instance_id_unchecked()
@@ -329,9 +329,9 @@ pub struct MemManual {}
 impl Sealed for MemManual {}
 impl Memory for MemManual {}
 impl DynMemory for MemManual {
-    fn maybe_init_ref<T: GodotClass>(_obj: &mut RawGd<T>) {}
-    fn maybe_inc_ref<T: GodotClass>(_obj: &mut RawGd<T>) {}
-    unsafe fn maybe_dec_ref<T: GodotClass>(_obj: &mut RawGd<T>) -> bool {
+    fn maybe_init_ref<T: GodotClass + ?Sized>(_obj: &mut RawGd<T>) {}
+    fn maybe_inc_ref<T: GodotClass + ?Sized>(_obj: &mut RawGd<T>) {}
+    unsafe fn maybe_dec_ref<T: GodotClass + ?Sized>(_obj: &mut RawGd<T>) -> bool {
         false
     }
     fn is_ref_counted<T: GodotClass>(_obj: &RawGd<T>) -> Option<bool> {
@@ -349,7 +349,7 @@ impl DynMemory for MemManual {
 pub trait Declarer: Sealed {
     /// The target type of a `Deref` operation on a `Gd<T>`.
     #[doc(hidden)]
-    type DerefTarget<T: GodotClass>: GodotClass;
+    type DerefTarget<T: GodotClass + ?Sized>: GodotClass;
 
     /// Used as a field in `RawGd`; only set for user-defined classes.
     #[doc(hidden)]
@@ -375,7 +375,7 @@ pub trait Declarer: Sealed {
 pub enum DeclEngine {}
 impl Sealed for DeclEngine {}
 impl Declarer for DeclEngine {
-    type DerefTarget<T: GodotClass> = T;
+    type DerefTarget<T: GodotClass + ?Sized> = T;
     type InstanceCache = ();
 
     unsafe fn is_currently_bound<T>(_obj: &RawGd<T>) -> bool
@@ -401,7 +401,7 @@ impl Declarer for DeclEngine {
 pub enum DeclUser {}
 impl Sealed for DeclUser {}
 impl Declarer for DeclUser {
-    type DerefTarget<T: GodotClass> = T::Base;
+    type DerefTarget<T: GodotClass + ?Sized> = T::Base;
     type InstanceCache = std::cell::Cell<sys::GDExtensionClassInstancePtr>;
 
     unsafe fn is_currently_bound<T>(obj: &RawGd<T>) -> bool

@@ -46,7 +46,7 @@ impl ObjectRtti {
     /// # Panics
     /// In Debug mode, if the object is not of type `T` or derived.
     #[inline]
-    pub fn check_type<T: GodotClass>(&self) -> InstanceId {
+    pub fn check_type<T: GodotClass + ?Sized>(&self) -> InstanceId {
         #[cfg(debug_assertions)]
         crate::classes::ensure_object_inherits(self.class_name, T::class_name(), self.instance_id);
 

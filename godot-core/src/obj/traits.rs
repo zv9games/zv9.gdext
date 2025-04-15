@@ -24,8 +24,7 @@ use godot_ffi as sys;
     note = "you can use `#[derive(GodotClass)]` to register your own structs with Godot",
     note = "see also: https://godot-rust.github.io/book/register/classes.html"
 )]
-pub trait GodotClass: Bounds + 'static
-{
+pub trait GodotClass: Bounds + 'static {
     /// The immediate superclass of `T`. This is always a Godot engine class.
     type Base: GodotClass; // not EngineClass because it can be ()
 
@@ -439,7 +438,7 @@ pub trait WithUserSignals: WithSignals + WithBaseField {}
 ///
 /// User-defined classes with `#[signal]` additionally implement [`WithUserSignals`].
 #[cfg(since_api = "4.2")]
-pub trait WithSignals: GodotClass + Sized  {
+pub trait WithSignals: GodotClass + Sized {
     /// The associated struct listing all signals of this class.
     ///
     /// `'c` denotes the lifetime during which the class instance is borrowed and its signals can be modified.
@@ -491,7 +490,7 @@ pub trait WithUserSignals: WithSignals + WithBaseField {
 }
 
 /// Extension trait for all reference-counted classes.
-pub trait NewGd: GodotClass+ Sized  {
+pub trait NewGd: GodotClass + Sized {
     /// Return a new, ref-counted `Gd` containing a default-constructed instance.
     ///
     /// `MyClass::new_gd()` is equivalent to `Gd::<MyClass>::default()`.
@@ -559,7 +558,7 @@ pub mod cap {
         note = "to opt out, use `#[class(no_init)]`",
         note = "see also: https://godot-rust.github.io/book/register/constructors.html"
     )]
-    pub trait GodotDefault: GodotClass+ Sized  {
+    pub trait GodotDefault: GodotClass + Sized {
         /// Provides a default smart pointer instance.
         ///
         /// Semantics:
