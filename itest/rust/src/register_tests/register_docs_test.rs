@@ -304,7 +304,7 @@ impl FairlyDocumented {
     fn other_signal(x: i64);
 }
 
-#[itest]
+#[itest(skip)] // Temporarily disabled for repro test on Windows (not to be merged).
 fn test_register_docs() {
     let xml = find_class_docs("FairlyDocumented");
 
