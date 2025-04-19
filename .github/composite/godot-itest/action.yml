@@ -163,21 +163,26 @@ runs:
       #
       # --disallow-focus: fail if #[itest(focus)] is encountered, to prevent running only a few tests for full CI
       run: |
+        set -e
         cd itest/godot
-        echo "OUTCOME=itest" >> $GITHUB_ENV
-        $GODOT4_BIN --headless -- --disallow-focus ${{ inputs.godot-args }} 2>&1 \
-        | tee "${{ runner.temp }}/log.txt" \
-        | tee >(grep -E "SCRIPT ERROR:|Can't open dynamic library" -q && {
-          printf "\n::error::godot-itest: unrecoverable Godot error, abort...\n";
-          if [[ "$RUNNER_OS" == "Windows" ]]; then
-            taskkill -f -im godot*
-          else
-            pkill godot
-          fi
-          echo "OUTCOME=godot-runtime" >> $GITHUB_ENV
-          exit 2
-        })
-        
+
+        for i in $(seq 1 100);
+        do
+          echo "OUTCOME=itest" >> $GITHUB_ENV
+          $GODOT4_BIN --headless -- --disallow-focus ${{ inputs.godot-args }} 2>&1 \
+          | tee "${{ runner.temp }}/log.txt" \
+          | tee >(grep -E "SCRIPT ERROR:|Can't open dynamic library" -q && {
+            printf "\n::error::godot-itest: unrecoverable Godot error, abort...\n";
+            if [[ "$RUNNER_OS" == "Windows" ]]; then
+              taskkill -f -im godot*
+            else
+              pkill godot
+            fi
+            echo "OUTCOME=godot-runtime" >> $GITHUB_ENV
+            exit 2
+          })
+        done
+    
         echo "OUTCOME=success" >> $GITHUB_ENV
       shell: bash
 
