@@ -15,6 +15,7 @@ use std::thread::ThreadId;
 
 use crate::builtin::{Callable, RustCallable, Signal, Variant};
 use crate::classes::object::ConnectFlags;
+use crate::godot_error;
 use crate::meta::sealed::Sealed;
 use crate::meta::ParamTuple;
 use crate::obj::{EngineBitfield, Gd, GodotClass, WithSignals};
@@ -136,7 +137,13 @@ impl<R: IntoDynamicSend> Display for SignalFutureResolver<R> {
 // the future as dead we can resolve it to an error value the next time it gets polled.
 impl<R: IntoDynamicSend> Drop for SignalFutureResolver<R> {
     fn drop(&mut self) {
-        let mut data = self.data.lock().unwrap();
+        let mut data = match self.data.lock() {
+            Ok(guard) => guard,
+            Err(err) => {
+                godot_error!("Failed to access SignalFutureResolver mutex in Drop implementation! Mutex is poisoned: {err}");
+                return;
+            }
+        };
 
         if !matches!(data.state, SignalFutureState::Pending) {
             // The future is no longer pending, so no clean up is required.
@@ -267,7 +274,13 @@ impl<R: ParamTuple + IntoDynamicSend> Drop for FallibleSignalFuture<R> {
             return;
         }
 
-        let mut data_lock = self.data.lock().unwrap();
+        let mut data_lock = match self.data.lock() {
+            Ok(guard) => guard,
+            Err(err) => {
+                godot_error!("Failed to access FallibleSignalFuture mutex in Drop implementation! Mutex is poisoned: {err}");
+                return;
+            }
+        };
 
         data_lock.state = SignalFutureState::Dropped;
 
