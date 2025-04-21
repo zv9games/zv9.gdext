@@ -270,7 +270,7 @@ impl<R: ParamTuple + IntoDynamicSend> Future for FallibleSignalFuture<R> {
 impl<R: ParamTuple + IntoDynamicSend> Drop for FallibleSignalFuture<R> {
     fn drop(&mut self) {
         // The callable might alredy be destroyed, this occurs during engine shutdown.
-        if self.signal.object().is_none() {
+        if self.signal.is_null() {
             return;
         }
 
@@ -290,7 +290,7 @@ impl<R: ParamTuple + IntoDynamicSend> Drop for FallibleSignalFuture<R> {
         let gd_callable = Callable::from_custom(self.callable.clone());
 
         // is_connected will return true if the signal was never emited before the future is dropped.
-        if self.signal.is_connected(&gd_callable) {
+        if self.signal.is_null() && self.signal.is_connected(&gd_callable) {
             self.signal.disconnect(&gd_callable);
         }
     }
