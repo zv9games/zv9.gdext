@@ -233,7 +233,7 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
     /// Bounds should be added on user-facing safe APIs.
     pub(super) unsafe fn as_upcast_ref<Base>(&self) -> &Base
     where
-        Base: GodotClass,
+        Base: GodotClass// + ?Sized,
     {
         self.ensure_valid_upcast::<Base>();
 
@@ -271,7 +271,7 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
     /// Bounds should be added on user-facing safe APIs.
     pub(super) unsafe fn as_upcast_mut<Base>(&mut self) -> &mut Base
     where
-        Base: GodotClass,
+        Base: GodotClass //+ ?Sized,
     {
         self.ensure_valid_upcast::<Base>();
 
@@ -306,7 +306,7 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
     #[allow(clippy::extra_unused_type_parameters)]
     fn ensure_valid_upcast<Base>(&self)
     where
-        Base: GodotClass,
+        Base: GodotClass + ?Sized,
     {
         // Validation object identity.
         self.check_rtti("upcast_ref");

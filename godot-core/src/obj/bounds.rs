@@ -349,7 +349,7 @@ impl DynMemory for MemManual {
 pub trait Declarer: Sealed {
     /// The target type of a `Deref` operation on a `Gd<T>`.
     #[doc(hidden)]
-    type DerefTarget<T: GodotClass + ?Sized>: GodotClass;
+    type DerefTarget<T: GodotClass + ?Sized>: GodotClass + ?Sized;
 
     /// Used as a field in `RawGd`; only set for user-defined classes.
     #[doc(hidden)]
