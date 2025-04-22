@@ -84,6 +84,57 @@ impl<T: GodotClass> RawGd<T> {
     }
 }
 
+impl<T: GodotClass> RawGd<T> {
+    /// # Panics
+    /// If this `RawGd` is null.
+    pub(super) fn as_target(&self) -> &GdDerefTarget<T> {
+        // SAFETY: There are two possible Declarer::DerefTarget types:
+        // - T, if T is an engine class
+        // - T::Base, if T is a user class
+        // Both are valid targets for upcast. And both are always engine types.
+        unsafe { self.as_upcast_ref::<GdDerefTarget<T>>() }
+    }
+
+    /// # Panics
+    /// If this `RawGd` is null.
+    pub(super) fn as_target_mut(&mut self) -> &mut GdDerefTarget<T> {
+        // SAFETY: See as_target().
+        unsafe { self.as_upcast_mut::<GdDerefTarget<T>>() }
+    }
+
+    // Clippy believes the type parameters are not used, however they are used in the `.ffi_cast::<Base>` call.
+    #[allow(clippy::extra_unused_type_parameters)]
+    fn ensure_valid_upcast<Base>(&self)
+    where
+        Base: GodotClass,
+    {
+        // Validation object identity.
+        self.check_rtti("upcast_ref");
+        debug_assert!(!self.is_null(), "cannot upcast null object refs");
+
+        // In Debug builds, go the long path via Godot FFI to verify the results are the same.
+        #[cfg(debug_assertions)]
+        {
+            // SAFETY: we forget the object below and do not leave the function before.
+            let ffi_ref: RawGd<Base> =
+                unsafe { self.ffi_cast::<Base>().expect("failed FFI upcast") };
+
+            // The ID check is not that expressive; we should do a complete comparison of the ObjectRtti, but currently the dynamic types can
+            // be different (see comment in ObjectRtti struct). This at least checks that the transmuted object is not complete garbage.
+            // We get direct_id from Self and not Base because the latter has no API with current bounds; but this equivalence is tested in Deref.
+            let direct_id = self.instance_id_unchecked().expect("direct_id null");
+            let ffi_id = ffi_ref.instance_id_unchecked().expect("ffi_id null");
+
+            assert_eq!(
+                direct_id, ffi_id,
+                "upcast_ref: direct and FFI IDs differ. This is a bug, please report to gdext maintainers."
+            );
+
+            std::mem::forget(ffi_ref);
+        }
+    }
+}
+
 impl<T: GodotClass + ?Sized> RawGd<T> {
     /// Returns `self` but with initialized ref-count.
     fn with_inc_refcount(mut self) -> Self {
@@ -235,7 +286,8 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
     where
         Base: GodotClass// + ?Sized,
     {
-        self.ensure_valid_upcast::<Base>();
+        // FIXME!!
+        //self.ensure_valid_upcast::<Base>();
 
         // SAFETY:
         // Every engine object is a struct like:
@@ -273,7 +325,8 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
     where
         Base: GodotClass //+ ?Sized,
     {
-        self.ensure_valid_upcast::<Base>();
+        // FIXME!!
+        //self.ensure_valid_upcast::<Base>();
 
         // SAFETY: see also `as_upcast_ref()`.
         //
@@ -285,54 +338,7 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
         std::mem::transmute::<&mut Self, &mut Base>(self)
     }
 
-    /// # Panics
-    /// If this `RawGd` is null.
-    pub(super) fn as_target(&self) -> &GdDerefTarget<T> {
-        // SAFETY: There are two possible Declarer::DerefTarget types:
-        // - T, if T is an engine class
-        // - T::Base, if T is a user class
-        // Both are valid targets for upcast. And both are always engine types.
-        unsafe { self.as_upcast_ref::<GdDerefTarget<T>>() }
-    }
 
-    /// # Panics
-    /// If this `RawGd` is null.
-    pub(super) fn as_target_mut(&mut self) -> &mut GdDerefTarget<T> {
-        // SAFETY: See as_target().
-        unsafe { self.as_upcast_mut::<GdDerefTarget<T>>() }
-    }
-
-    // Clippy believes the type parameters are not used, however they are used in the `.ffi_cast::<Base>` call.
-    #[allow(clippy::extra_unused_type_parameters)]
-    fn ensure_valid_upcast<Base>(&self)
-    where
-        Base: GodotClass + ?Sized,
-    {
-        // Validation object identity.
-        self.check_rtti("upcast_ref");
-        debug_assert!(!self.is_null(), "cannot upcast null object refs");
-
-        // In Debug builds, go the long path via Godot FFI to verify the results are the same.
-        #[cfg(debug_assertions)]
-        {
-            // SAFETY: we forget the object below and do not leave the function before.
-            let ffi_ref: RawGd<Base> =
-                unsafe { self.ffi_cast::<Base>().expect("failed FFI upcast") };
-
-            // The ID check is not that expressive; we should do a complete comparison of the ObjectRtti, but currently the dynamic types can
-            // be different (see comment in ObjectRtti struct). This at least checks that the transmuted object is not complete garbage.
-            // We get direct_id from Self and not Base because the latter has no API with current bounds; but this equivalence is tested in Deref.
-            let direct_id = self.instance_id_unchecked().expect("direct_id null");
-            let ffi_id = ffi_ref.instance_id_unchecked().expect("ffi_id null");
-
-            assert_eq!(
-                direct_id, ffi_id,
-                "upcast_ref: direct and FFI IDs differ. This is a bug, please report to gdext maintainers."
-            );
-
-            std::mem::forget(ffi_ref);
-        }
-    }
 
     /// Verify that the object is non-null and alive. In Debug mode, additionally verify that it is of type `T` or derived.
     pub(crate) fn check_rtti(&self, method_name: &'static str) {
