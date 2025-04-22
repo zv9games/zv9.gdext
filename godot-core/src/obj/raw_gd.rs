@@ -133,6 +133,28 @@ impl<T: GodotClass> RawGd<T> {
             std::mem::forget(ffi_ref);
         }
     }
+
+    // See use-site for explanation.
+    fn is_cast_valid<U>(&self) -> bool
+    where
+        U: GodotClass,
+    {
+        if self.is_null() {
+            // Null can be cast to anything.
+            return true;
+        }
+
+        // SAFETY: object is forgotten below.
+        let as_obj =
+            unsafe { self.ffi_cast::<classes::Object>() }.expect("everything inherits Object");
+
+        // SAFETY: Object is always a base class.
+        let cast_is_valid = unsafe { as_obj.as_upcast_ref::<classes::Object>() }
+            .is_class(&U::class_name().to_gstring());
+
+        std::mem::forget(as_obj);
+        cast_is_valid
+    }
 }
 
 impl<T: GodotClass + ?Sized> RawGd<T> {
@@ -161,57 +183,6 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
         self.cached_rtti
             .as_ref()
             .is_some_and(|rtti| rtti.instance_id().lookup_validity())
-    }
-
-    // See use-site for explanation.
-    fn is_cast_valid<U>(&self) -> bool
-    where
-        U: GodotClass,
-    {
-        if self.is_null() {
-            // Null can be cast to anything.
-            return true;
-        }
-
-        // SAFETY: object is forgotten below.
-        let as_obj =
-            unsafe { self.ffi_cast::<classes::Object>() }.expect("everything inherits Object");
-
-        // SAFETY: Object is always a base class.
-        let cast_is_valid = unsafe { as_obj.as_upcast_ref::<classes::Object>() }
-            .is_class(&U::class_name().to_gstring());
-
-        std::mem::forget(as_obj);
-        cast_is_valid
-    }
-
-    /// Returns `Ok(cast_obj)` on success, `Err(self)` on error
-    pub(super) fn owned_cast<U>(self) -> Result<RawGd<U>, Self>
-    where
-        U: GodotClass,
-    {
-        // Workaround for bug in Godot that makes casts always succeed (https://github.com/godot-rust/gdext/issues/158).
-        // TODO once fixed in Godot, remove this.
-        if !self.is_cast_valid::<U>() {
-            return Err(self);
-        }
-
-        // The unsafe { std::mem::transmute<&T, &Base>(self.inner()) } relies on the C++ static_cast class casts
-        // to return the same pointer, however in theory those may yield a different pointer (VTable offset,
-        // virtual inheritance etc.). It *seems* to work so far, but this is no indication it's not UB.
-        //
-        // The Deref/DerefMut impls for T implement an "implicit upcast" on the object (not Gd) level and
-        // rely on this (e.g. &Node3D -> &Node).
-
-        let result = unsafe { self.ffi_cast::<U>() };
-        match result {
-            Some(cast_obj) => {
-                // duplicated ref, one must be wiped
-                std::mem::forget(self);
-                Ok(cast_obj)
-            }
-            None => Err(self),
-        }
     }
 
     /// # Safety
@@ -245,17 +216,36 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
         // Create weak object, as ownership will be moved and reference-counter stays the same.
         sys::ptr_then(cast_object_ptr, |ptr| RawGd::from_obj_sys_weak(ptr))
     }
+}
 
-    pub(crate) fn with_ref_counted<R>(&self, apply: impl Fn(&mut classes::RefCounted) -> R) -> R {
-        // Note: this previously called Declarer::scoped_mut() - however, no need to go through bind() for changes in base RefCounted.
-        // Any accesses to user objects (e.g. destruction if refc=0) would bind anyway.
+impl<T: GodotClass> RawGd<T> {
+    /// Returns `Ok(cast_obj)` on success, `Err(self)` on error
+    pub(super) fn owned_cast<U>(self) -> Result<RawGd<U>, Self>
+    where
+        U: GodotClass,
+    {
+        // Workaround for bug in Godot that makes casts always succeed (https://github.com/godot-rust/gdext/issues/158).
+        // TODO once fixed in Godot, remove this.
+        if !self.is_cast_valid::<U>() {
+            return Err(self);
+        }
 
-        let tmp = unsafe { self.ffi_cast::<classes::RefCounted>() };
-        let mut tmp = tmp.expect("object expected to inherit RefCounted");
-        let return_val = apply(tmp.as_target_mut());
+        // The unsafe { std::mem::transmute<&T, &Base>(self.inner()) } relies on the C++ static_cast class casts
+        // to return the same pointer, however in theory those may yield a different pointer (VTable offset,
+        // virtual inheritance etc.). It *seems* to work so far, but this is no indication it's not UB.
+        //
+        // The Deref/DerefMut impls for T implement an "implicit upcast" on the object (not Gd) level and
+        // rely on this (e.g. &Node3D -> &Node).
 
-        std::mem::forget(tmp); // no ownership transfer
-        return_val
+        let result = unsafe { self.ffi_cast::<U>() };
+        match result {
+            Some(cast_obj) => {
+                // duplicated ref, one must be wiped
+                std::mem::forget(self);
+                Ok(cast_obj)
+            }
+            None => Err(self),
+        }
     }
 
     // TODO replace the above with this -- last time caused UB; investigate.
@@ -284,10 +274,9 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
     /// Bounds should be added on user-facing safe APIs.
     pub(super) unsafe fn as_upcast_ref<Base>(&self) -> &Base
     where
-        Base: GodotClass// + ?Sized,
+        Base: GodotClass, // + ?Sized,
     {
-        // FIXME!!
-        //self.ensure_valid_upcast::<Base>();
+        self.ensure_valid_upcast::<Base>();
 
         // SAFETY:
         // Every engine object is a struct like:
@@ -323,10 +312,9 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
     /// Bounds should be added on user-facing safe APIs.
     pub(super) unsafe fn as_upcast_mut<Base>(&mut self) -> &mut Base
     where
-        Base: GodotClass //+ ?Sized,
+        Base: GodotClass, //+ ?Sized,
     {
-        // FIXME!!
-        //self.ensure_valid_upcast::<Base>();
+        self.ensure_valid_upcast::<Base>();
 
         // SAFETY: see also `as_upcast_ref()`.
         //
@@ -337,8 +325,19 @@ impl<T: GodotClass + ?Sized> RawGd<T> {
         // of the internal object would thus require multiple &mut Gd<T>, which cannot happen.
         std::mem::transmute::<&mut Self, &mut Base>(self)
     }
+}
+impl<T: GodotClass + ?Sized> RawGd<T> {
+    pub(crate) fn with_ref_counted<R>(&self, apply: impl Fn(&mut classes::RefCounted) -> R) -> R {
+        // Note: this previously called Declarer::scoped_mut() - however, no need to go through bind() for changes in base RefCounted.
+        // Any accesses to user objects (e.g. destruction if refc=0) would bind anyway.
 
+        let tmp = unsafe { self.ffi_cast::<classes::RefCounted>() };
+        let mut tmp = tmp.expect("object expected to inherit RefCounted");
+        let return_val = apply(tmp.as_target_mut());
 
+        std::mem::forget(tmp); // no ownership transfer
+        return_val
+    }
 
     /// Verify that the object is non-null and alive. In Debug mode, additionally verify that it is of type `T` or derived.
     pub(crate) fn check_rtti(&self, method_name: &'static str) {

@@ -349,7 +349,7 @@ impl DynMemory for MemManual {
 pub trait Declarer: Sealed {
     /// The target type of a `Deref` operation on a `Gd<T>`.
     #[doc(hidden)]
-    type DerefTarget<T: GodotClass >: GodotClass;
+    type DerefTarget<T: GodotClass>: GodotClass;
 
     /// Used as a field in `RawGd`; only set for user-defined classes.
     #[doc(hidden)]
@@ -401,7 +401,7 @@ impl Declarer for DeclEngine {
 pub enum DeclUser {}
 impl Sealed for DeclUser {}
 impl Declarer for DeclUser {
-    type DerefTarget<T: GodotClass > = T::Base;
+    type DerefTarget<T: GodotClass> = T::Base;
     type InstanceCache = std::cell::Cell<sys::GDExtensionClassInstancePtr>;
 
     unsafe fn is_currently_bound<T>(obj: &RawGd<T>) -> bool
