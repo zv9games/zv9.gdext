@@ -116,6 +116,7 @@ pub fn make_enum_definition_with(
 
             impl crate::meta::ToGodot for #name {
                 type ToVia<'v> = #ord_type;
+                type ArgPassing = crate::meta::ByValue;
 
                 fn to_godot(&self) -> Self::ToVia<'_> {
                     <Self as #engine_trait>::ord(*self)

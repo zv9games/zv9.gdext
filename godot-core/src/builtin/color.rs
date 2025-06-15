@@ -363,7 +363,7 @@ unsafe impl GodotFfi for Color {
     ffi_methods! { type sys::GDExtensionTypePtr = *mut Self; .. }
 }
 
-crate::meta::impl_godot_as_self!(Color);
+crate::meta::impl_godot_as_self!(Color: ByValue);
 
 impl ApproxEq for Color {
     fn approx_eq(&self, other: &Self) -> bool {

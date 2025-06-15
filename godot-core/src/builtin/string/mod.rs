@@ -31,6 +31,8 @@ impl ToGodot for &str {
     where
         Self: 'v;
 
+    type ArgPassing = crate::meta::ByValue;
+
     fn to_godot(&self) -> Self::ToVia<'_> {
         GString::from(*self)
     }
@@ -42,6 +44,7 @@ impl GodotConvert for String {
 
 impl ToGodot for String {
     type ToVia<'v> = Self::Via;
+    type ArgPassing = crate::meta::ByRef;
 
     fn to_godot(&self) -> Self::ToVia<'_> {
         GString::from(self)

@@ -88,6 +88,8 @@ where
     where
         Self: 'v;
 
+    type ArgPassing = T::ArgPassing;
+
     fn to_godot(&self) -> Self::ToVia<'_> {
         self.cow_as_ref().to_godot()
     }

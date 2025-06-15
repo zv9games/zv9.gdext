@@ -1128,6 +1128,7 @@ impl<T: ArrayElement> GodotConvert for Array<T> {
 
 impl<T: ArrayElement> ToGodot for Array<T> {
     type ToVia<'v> = Self::Via;
+    type ArgPassing = crate::meta::ByRef;
 
     fn to_godot(&self) -> Self::ToVia<'_> {
         // SAFETY: only safe when passing to FFI in a context where Rust-side type doesn't matter.

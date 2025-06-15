@@ -13,8 +13,8 @@ use godot::meta::{FromGodot, GodotConvert, ParamType, ToGodot};
 use godot::obj::{Base, Gd, InstanceId, NewAlloc, NewGd};
 use godot::prelude::ConvertError;
 use godot::register::{godot_api, GodotClass};
+use godot::sys;
 use godot::sys::Global;
-use godot::{meta, sys};
 use std::cell::{Cell, RefCell};
 use std::rc::Rc;
 
@@ -487,6 +487,7 @@ fn enums_as_signal_args() {
 
     impl ToGodot for EventType {
         type ToVia<'v> = Self::Via;
+        type ArgPassing = godot::meta::ByValue;
 
         fn to_godot(&self) -> Self::ToVia<'_> {
             match self {
@@ -496,7 +497,7 @@ fn enums_as_signal_args() {
     }
 
     impl ParamType for EventType {
-        type ArgPassing = meta::ByValue;
+        type ArgPassing = godot::meta::ByValue;
     }
 
     impl FromGodot for EventType {

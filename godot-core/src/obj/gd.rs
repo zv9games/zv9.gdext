@@ -764,6 +764,7 @@ impl<T: GodotClass> GodotConvert for Gd<T> {
 impl<T: GodotClass> ToGodot for Gd<T> {
     // TODO return RefArg here?
     type ToVia<'v> = Gd<T>;
+    type ArgPassing = crate::meta::ByRef;
 
     fn to_godot(&self) -> Self::ToVia<'_> {
         self.raw.check_rtti("to_godot");

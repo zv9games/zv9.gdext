@@ -75,7 +75,7 @@ where
 
 impl<T> AsArg<T> for &T
 where
-    T: ToGodot + ParamType<ArgPassing = ByRef>,
+    T: ToGodot<ArgPassing = ByRef>,
 {
     fn into_arg<'r>(self) -> CowArg<'r, T>
     where
@@ -87,7 +87,7 @@ where
 
 impl<T> AsArg<T> for T
 where
-    T: ToGodot + ParamType<ArgPassing = ByValue>,
+    T: ToGodot<ArgPassing = ByValue>,
 {
     fn into_arg<'r>(self) -> CowArg<'r, T>
     where

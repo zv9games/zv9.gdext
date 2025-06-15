@@ -552,6 +552,7 @@ impl<T: GodotClass> GodotConvert for RawGd<T> {
 
 impl<T: GodotClass> ToGodot for RawGd<T> {
     type ToVia<'v> = Self;
+    type ArgPassing = crate::meta::ByRef;
 
     fn to_godot(&self) -> Self::ToVia<'_> {
         self.clone()

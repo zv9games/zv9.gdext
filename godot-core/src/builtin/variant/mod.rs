@@ -525,7 +525,7 @@ unsafe impl GodotFfi for Variant {
     ffi_methods! { type sys::GDExtensionTypePtr = *mut Self; .. }
 }
 
-crate::meta::impl_godot_as_self!(Variant);
+crate::meta::impl_godot_as_self!(Variant: ByRef);
 
 impl Default for Variant {
     fn default() -> Self {

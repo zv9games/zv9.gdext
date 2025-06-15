@@ -511,6 +511,8 @@ where
     where
         D: 'v;
 
+    type ArgPassing = <Gd<T> as ToGodot>::ArgPassing;
+
     fn to_godot(&self) -> Self::ToVia<'_> {
         self.obj.to_godot()
     }

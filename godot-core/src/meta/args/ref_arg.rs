@@ -89,6 +89,8 @@ where
     where
         Self: 'v;
 
+    type ArgPassing = T::ArgPassing;
+
     fn to_godot(&self) -> Self::ToVia<'_> {
         let shared_ref = self
             .shared_ref

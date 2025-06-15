@@ -87,6 +87,7 @@ macro_rules! push_newtype {
 
             impl godot::meta::ToGodot for $name {
                 type ToVia<'v> = $T;
+                type ArgPassing = godot::meta::ByValue;
 
                 #[allow(clippy::clone_on_copy)]
                 fn to_godot(&self) -> Self::ToVia<'_> {

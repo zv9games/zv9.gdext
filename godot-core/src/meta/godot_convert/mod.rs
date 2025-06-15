@@ -10,7 +10,7 @@ mod impls;
 use crate::builtin::Variant;
 use crate::meta::error::ConvertError;
 use crate::meta::traits::GodotFfiVariant;
-use crate::meta::GodotType;
+use crate::meta::{ArgPassing, GodotType};
 
 /// Indicates that a type can be passed to/from Godot, either directly or through an intermediate "via" type.
 ///
@@ -60,8 +60,6 @@ pub trait ToGodot: Sized + GodotConvert {
     where
         Self: 'v;
 
-    /*
-    // TODO(v0.4): add this type, to replace ParamType::ArgPassing and possibly Self::ToVia<'v>.
     /// Whether this type is passed by value or by reference in `AsArg` contexts.
     ///
     /// Can be either [`ArgPassing::ByValue`] or [`ArgPassing::ByRef`]. For types implementing `Copy`, by-value is strongly recommended.
@@ -69,7 +67,6 @@ pub trait ToGodot: Sized + GodotConvert {
     /// Will auto-implement `AsArg<T>` for either `T` (by-value) or for `&T` (by-reference). This has an influence on contexts such as
     /// [`Array::push()`](crate::builtin::Array::push) or generated signal `emit()` signatures.
     type ArgPassing: ArgPassing;
-     */
 
     /// Converts this type to the Godot type by reference, usually by cloning.
     fn to_godot(&self) -> Self::ToVia<'_>;
@@ -133,13 +130,14 @@ pub trait FromGodot: Sized + GodotConvert {
 
 #[macro_export]
 macro_rules! impl_godot_as_self {
-    ($T:ty) => {
+    ($T:ty: $Passing:ident) => {
         impl $crate::meta::GodotConvert for $T {
             type Via = $T;
         }
 
         impl $crate::meta::ToGodot for $T {
             type ToVia<'v> = Self::Via;
+            type ArgPassing = $crate::meta::$Passing;
 
             #[inline]
             fn to_godot(&self) -> Self::ToVia<'_> {

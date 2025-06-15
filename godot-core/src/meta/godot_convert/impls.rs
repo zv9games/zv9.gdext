@@ -106,6 +106,8 @@ where
     where
         Self: 'v;
 
+    type ArgPassing = T::ArgPassing;
+
     fn to_godot(&self) -> Self::ToVia<'_> {
         self.as_ref().map(ToGodot::to_godot)
     }
@@ -238,6 +240,7 @@ macro_rules! impl_godot_scalar {
 
         impl ToGodot for $T {
             type ToVia<'v> = Self::Via;
+            type ArgPassing = crate::meta::ByValue;
 
             fn to_godot(&self) -> Self::ToVia<'_> {
                *self
@@ -255,10 +258,10 @@ macro_rules! impl_godot_scalar {
 }
 
 // `GodotType` for these three is implemented in `godot-core/src/builtin/variant/impls.rs`.
-crate::meta::impl_godot_as_self!(bool);
-crate::meta::impl_godot_as_self!(i64);
-crate::meta::impl_godot_as_self!(f64);
-crate::meta::impl_godot_as_self!(());
+crate::meta::impl_godot_as_self!(bool: ByValue);
+crate::meta::impl_godot_as_self!(i64: ByValue);
+crate::meta::impl_godot_as_self!(f64: ByValue);
+crate::meta::impl_godot_as_self!((): ByValue);
 
 // Also implements ArrayElement.
 impl_godot_scalar!(
@@ -326,6 +329,7 @@ impl GodotConvert for u64 {
 
 impl ToGodot for u64 {
     type ToVia<'v> = u64;
+    type ArgPassing = crate::meta::ByValue;
 
     fn to_godot(&self) -> Self::ToVia<'_> {
         *self
@@ -366,6 +370,7 @@ impl<T: ArrayElement> GodotConvert for Vec<T> {
 
 impl<T: ArrayElement> ToGodot for Vec<T> {
     type ToVia<'v> = Array<T>;
+    type ArgPassing = crate::meta::ByRef;
 
     fn to_godot(&self) -> Self::ToVia<'_> {
         Array::from(self.as_slice())
@@ -384,6 +389,7 @@ impl<T: ArrayElement, const LEN: usize> GodotConvert for [T; LEN] {
 
 impl<T: ArrayElement, const LEN: usize> ToGodot for [T; LEN] {
     type ToVia<'v> = Array<T>;
+    type ArgPassing = crate::meta::ByRef;
 
     fn to_godot(&self) -> Self::ToVia<'_> {
         Array::from(self)
@@ -428,6 +434,8 @@ impl<T: ArrayElement> ToGodot for &[T] {
     where
         Self: 'v;
 
+    type ArgPassing = crate::meta::ByValue;
+
     fn to_godot(&self) -> Self::ToVia<'_> {
         Array::from(*self)
     }
@@ -448,6 +456,7 @@ macro_rules! impl_pointer_convert {
 
         impl ToGodot for $Ptr {
             type ToVia<'v> = i64;
+            type ArgPassing = crate::meta::ByValue;
 
             fn to_godot(&self) -> Self::ToVia<'_> {
                 *self as i64
