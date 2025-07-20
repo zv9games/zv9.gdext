@@ -10,7 +10,7 @@ use crate::models::domain::{Class, ClassLike, ExtensionApi, FnDirection, Functio
 use proc_macro2::TokenStream;
 use quote::quote;
 
-pub fn make_virtual_consts_file(api: &ExtensionApi, ctx: &mut Context) -> TokenStream {
+pub fn make_virtual_definitions_file(api: &ExtensionApi, ctx: &mut Context) -> TokenStream {
     make_virtual_hashes_for_all_classes(&api.classes, ctx)
 }
 

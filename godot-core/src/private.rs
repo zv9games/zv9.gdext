@@ -6,6 +6,8 @@
  */
 
 pub use crate::gen::classes::class_macros;
+pub use crate::gen::virtuals; // virtual fn names, hashes, signatures
+
 pub use crate::obj::rtti::ObjectRtti;
 pub use crate::registry::callbacks;
 pub use crate::registry::plugin::{
