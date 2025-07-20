@@ -454,15 +454,12 @@ impl ExportType {
                     export_range(#min, #max, #step, #or_greater, #or_less, #exp, #radians_as_degrees || #radians, #degrees, #hide_slider, #suffix)
                 }?;
                 let deprecation_warning = if *radians {
-                    // For some reason, rustfmt formatting like this.  Probably a bug.
-                    // See https://github.com/godot-rust/gdext/pull/783#discussion_r1669105958 and
-                    // https://github.com/rust-lang/rustfmt/issues/6233
                     quote! {
-                    #export_func;
-                    ::godot::__deprecated::emit_deprecated_warning!(export_range_radians);
-                            }
+                        #export_func;
+                        ::godot::__deprecated::emit_deprecated_warning!(export_range_radians);
+                    }
                 } else {
-                    quote! { #export_func }
+                    export_func
                 };
                 Some(quote! {
                     #deprecation_warning
