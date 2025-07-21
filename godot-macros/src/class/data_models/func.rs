@@ -50,6 +50,7 @@ impl FuncDefinition {
 // Virtual methods are non-static by their nature; so there's no support for static ones.
 pub fn make_virtual_callback(
     class_name: &Ident,
+    trait_base_class: &Ident,
     signature_info: &SignatureInfo,
     before_kind: BeforeKind,
     interface_trait: Option<&venial::TypeExpr>,
@@ -57,7 +58,7 @@ pub fn make_virtual_callback(
     let method_name = &signature_info.method_name;
 
     let wrapped_method =
-        make_forwarding_closure(class_name, signature_info, before_kind, interface_trait);
+        make_forwarding_closure(class_name, trait_base_class, signature_info, before_kind, interface_trait);
     let sig_params = signature_info.params_type();
     let sig_ret = &signature_info.return_type;
 
@@ -234,6 +235,7 @@ pub enum BeforeKind {
 /// Returns a closure expression that forwards the parameters to the Rust instance.
 fn make_forwarding_closure(
     class_name: &Ident,
+    trait_base_class: &Ident,
     signature_info: &SignatureInfo,
     before_kind: BeforeKind,
     interface_trait: Option<&venial::TypeExpr>,
@@ -263,29 +265,40 @@ fn make_forwarding_closure(
         ReceiverType::Ref | ReceiverType::Mut => {
             // Generated default virtual methods (e.g. for ready) may not have an actual implementation (user code), so
             // all they need to do is call the __before_ready() method. This means the actual method call may be optional.
-            let method_call = if matches!(before_kind, BeforeKind::OnlyBefore) {
-                TokenStream::new()
+            let method_call;
+            let sig_type_annotation;
+            if matches!(before_kind, BeforeKind::OnlyBefore) {
+                sig_type_annotation = None;
+                method_call = TokenStream::new()
+            } else if let Some(interface_trait) = interface_trait {
+                // impl ITrait for Class {...}
+                // Virtual methods.
+                let instance_ref = match signature_info.receiver_type {
+                    ReceiverType::Ref => quote! { &instance },
+                    ReceiverType::Mut => quote! { &mut instance },
+                    _ => unreachable!("unexpected receiver type"), // checked above.
+                };
+
+                let rust_sig_name = format_ident!("Sig_{method_name}");
+                sig_type_annotation = Some(quote! {
+                    : ::godot::private::virtuals::#trait_base_class::#rust_sig_name
+                });
+                method_call = quote! {
+                    <#class_name as #interface_trait>::#method_name( #instance_ref, #(#params),* )
+                };
             } else {
-                match interface_trait {
-                    // impl ITrait for Class {...}
-                    Some(interface_trait) => {
-                        let instance_ref = match signature_info.receiver_type {
-                            ReceiverType::Ref => quote! { &instance },
-                            ReceiverType::Mut => quote! { &mut instance },
-                            _ => unreachable!("unexpected receiver type"), // checked above.
-                        };
+                // impl Class {...}
+                // Methods are non-virtual.
 
-                        quote! { <#class_name as #interface_trait>::#method_name( #instance_ref, #(#params),* ) }
-                    }
-
-                    // impl Class {...}
-                    None => quote! { instance.#method_name( #(#params),* ) },
-                }
+                sig_type_annotation = None;
+                method_call = quote! {
+                    instance.#method_name( #(#params),* )
+                };
             };
 
             quote! {
                 |instance_ptr, params| {
-                    let ( #(#params,)* ) = params;
+                    let ( #(#params,)* ) #sig_type_annotation = params;
 
                     let storage =
                         unsafe { ::godot::private::as_storage::<#class_name>(instance_ptr) };
@@ -301,6 +314,7 @@ fn make_forwarding_closure(
             // (Absent method is only used in the case of a generated default virtual method, e.g. for ready()).
             quote! {
                 |instance_ptr, params| {
+                    // Not using `virtual_sig`, because right now, #[func(gd_self)] is only possible for non-virtual methods.
                     let ( #(#params,)* ) = params;
 
                     let storage =

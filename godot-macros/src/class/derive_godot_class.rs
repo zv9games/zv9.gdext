@@ -410,6 +410,7 @@ fn make_oneditor_panic_inits(class_name: &Ident, all_fields: &[Field]) -> TokenS
 
 fn make_user_class_impl(
     class_name: &Ident,
+    trait_base_class: &Ident,
     is_tool: bool,
     all_fields: &[Field],
 ) -> (TokenStream, bool) {
@@ -420,7 +421,6 @@ fn make_user_class_impl(
     let rpc_registrations = TokenStream::new();
 
     let onready_inits = make_onready_init(all_fields);
-
     let oneditor_panic_inits = make_oneditor_panic_inits(class_name, all_fields);
 
     let run_before_ready = !onready_inits.is_empty() || !oneditor_panic_inits.is_empty();
@@ -429,8 +429,13 @@ fn make_user_class_impl(
         let tool_check = util::make_virtual_tool_check();
         let signature_info = SignatureInfo::fn_ready();
 
-        let callback =
-            make_virtual_callback(class_name, &signature_info, BeforeKind::OnlyBefore, None);
+        let callback = make_virtual_callback(
+            class_name,
+            trait_base_class,
+            &signature_info,
+            BeforeKind::OnlyBefore,
+            None,
+        );
 
         // See also __virtual_call() codegen.
         // This doesn't explicitly check if the base class inherits from Node (and thus has `_ready`), but the derive-macro already does
