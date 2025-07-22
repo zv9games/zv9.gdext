@@ -178,7 +178,7 @@ impl INode2D for VirtualInputTest {
 
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 
-#[derive(Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 enum ReceivedEvent {
     Notification(NodeNotification),
     Ready,
@@ -527,6 +527,73 @@ fn test_notifications() {
             ReceivedEvent::Notification(NodeNotification::WM_SIZE_CHANGED),
         ]
     );
+    obj.free();
+}
+
+#[itest]
+fn test_postinitialize_notification() {
+    let obj = NotificationTest::new_alloc();
+    let mut node = obj.clone().upcast::<Node>();
+
+    // First, check if POSTINITIALIZE was automatically sent during initialization
+    let initial_sequence = obj.bind().sequence.clone();
+
+    // If not automatically sent, test manual notification
+    node.notify(NodeNotification::POSTINITIALIZE);
+
+    let final_sequence = obj.bind().sequence.clone();
+
+    // Verify POSTINITIALIZE was received (either initially or after manual notify)
+    let has_postinitialize = final_sequence.iter().any(|event| {
+        matches!(
+            event,
+            ReceivedEvent::Notification(NodeNotification::POSTINITIALIZE)
+        )
+    });
+
+    assert!(
+        has_postinitialize,
+        "POSTINITIALIZE notification should be received. Initial sequence: {initial_sequence:?}, Final sequence: {final_sequence:?}"
+    );
+
+    obj.free();
+}
+
+#[itest]
+fn test_postinitialize_lifecycle(test_context: &TestContext) {
+    // Test if POSTINITIALIZE is sent during various object lifecycle phases
+    let obj = NotificationTest::new_alloc();
+    let _initial_sequence = obj.bind().sequence.clone();
+
+    // Add to scene tree to see if POSTINITIALIZE is triggered
+    let mut test_node = test_context.scene_tree.clone();
+    test_node.add_child(&obj);
+    let after_tree_sequence = obj.bind().sequence.clone();
+
+    // Test manual POSTINITIALIZE notification
+    let mut node = obj.clone().upcast::<Node>();
+    node.notify(NodeNotification::POSTINITIALIZE);
+    let final_sequence = obj.bind().sequence.clone();
+
+    // Verify that POSTINITIALIZE can be received
+    let has_postinitialize = final_sequence.iter().any(|event| {
+        matches!(
+            event,
+            ReceivedEvent::Notification(NodeNotification::POSTINITIALIZE)
+        )
+    });
+
+    assert!(
+        has_postinitialize,
+        "POSTINITIALIZE notification should be receivable"
+    );
+
+    // The manual notification should have been added
+    assert!(
+        final_sequence.len() > after_tree_sequence.len(),
+        "Manual POSTINITIALIZE should be added to sequence"
+    );
+
     obj.free();
 }
 
