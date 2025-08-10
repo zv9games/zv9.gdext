@@ -199,3 +199,7 @@ impl TraitA for CodegenTest3 {
 fn test_itest_macro_attribute_retention() {
     let unused_var = 42; // Should not generate warning.
 }
+
+#[derive(GodotClass)]
+#[class(init, internal)]
+pub struct EditorObject {}
