@@ -161,6 +161,47 @@ where
         unsafe { Gd::from_obj_sys(object_ptr) }
     }
 
+    /// Creates a `Gd<T>` using an enhanced initialization function with [`Initer<T>`].
+    ///
+    /// This is an alternative to [`from_init_fn`] that provides additional capabilities
+    /// during object construction. Use this when you need to access the object during
+    /// initialization for registration, setup, or other initialization-time operations.
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use godot::prelude::*;
+    /// # struct GameManager;
+    /// # impl GameManager { fn register(gd: &Gd<impl GodotClass>) {} }
+    /// #[derive(GodotClass)]
+    /// #[class(init, base=RefCounted)]
+    /// struct Player {
+    ///     base: Base<RefCounted>,
+    ///     health: i32,
+    /// }
+    ///
+    /// let obj = Gd::from_init2_fn(|initer| {
+    ///     let gd = initer.to_gd();
+    ///     GameManager::register(&gd);  // Register before construction completes
+    ///     
+    ///     Player {
+    ///         base: initer.into_base(),
+    ///         health: 100
+    ///     }
+    /// });
+    /// ```
+    ///
+    /// [`from_init_fn`]: Self::from_init_fn
+    /// [`Initer<T>`]: crate::obj::Initer
+    pub fn from_init2_fn<F>(init: F) -> Self
+    where
+        F: FnOnce(crate::obj::Initer<T::Base>) -> T,
+    {
+        let object_ptr = callbacks::create_custom_with_initer(init) // or propagate panic.
+            .unwrap_or_else(|payload| PanicPayload::repanic(payload));
+
+        unsafe { Gd::from_obj_sys(object_ptr) }
+    }
+
     /// Moves a user-created object into this smart pointer, submitting ownership to the Godot engine.
     ///
     /// This is only useful for types `T` which do not store their base objects (if they have a base,

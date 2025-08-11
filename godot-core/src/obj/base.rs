@@ -164,8 +164,9 @@ impl<T: GodotClass> Base<T> {
 
     #[cfg(since_api = "4.2")]
     pub fn to_init_gd(&self) -> Gd<T> {
-        dbg!(std::mem::size_of::<Rc<RefCell<Option<Gd<T>>>>>());
-        dbg!(std::mem::size_of::<Self>());
+        // Memory debugging - can be enabled if needed
+        // dbg!(std::mem::size_of::<Rc<RefCell<Option<Gd<T>>>>>());
+        // dbg!(std::mem::size_of::<Self>());
 
         #[cfg(debug_assertions)]
         assert!(

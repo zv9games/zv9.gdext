@@ -1064,6 +1064,70 @@ fn custom_constructor_works() {
     obj.free();
 }
 
+#[itest]
+fn gd_from_init2_fn() {
+    let obj = Gd::from_init2_fn(|initer| {
+        // Test that Gd<T> can be obtained during initialization.
+        let _gd = initer.to_gd();
+
+        object_test_gd::CustomConstructor { val: 123 }
+    });
+
+    assert_eq!(obj.bind().val, 123);
+    obj.free();
+}
+
+#[itest]
+fn gd_from_init2_fn_without_to_gd() {
+    use crate::object_tests::base_test::RefcBased;
+
+    let obj = Gd::from_init2_fn(|initer| {
+        // Don't call initer.to_gd().
+        RefcBased {
+            base: initer.into_base(),
+        }
+    });
+
+    assert!(obj.is_instance_valid());
+}
+
+#[itest]
+fn from_init2_fn_multiple_calls() {
+    // Test that to_gd() can be called multiple times, like Base::to_init_gd().
+    let obj = Gd::from_init2_fn(|initer| {
+        let gd1: Gd<Object> = initer.to_gd();
+        let gd2: Gd<Object> = initer.to_gd();
+
+        // Both should be valid references to the same object
+        assert!(gd1.is_instance_valid());
+        assert!(gd2.is_instance_valid());
+        assert_eq!(gd1.instance_id(), gd2.instance_id());
+
+        object_test_gd::CustomConstructor { val: 789 }
+    });
+
+    assert_eq!(obj.bind().val, 789);
+    obj.free();
+}
+
+#[itest]
+fn from_init2_fn_refcounted_with_to_gd() {
+    use crate::object_tests::base_test::RefcBased;
+
+    // Test that to_gd() works correctly with RefCounted objects.
+    let obj = Gd::<RefcBased>::from_init2_fn(|initer| {
+        let gd: Gd<RefCounted> = initer.to_gd();
+        assert!(gd.is_instance_valid());
+
+        RefcBased {
+            base: initer.into_base(),
+        }
+    });
+
+    assert!(obj.is_instance_valid());
+    let _guard = obj.bind();
+}
+
 // ----------------------------------------------------------------------------------------------------------------------------------------------
 
 #[derive(GodotClass)]

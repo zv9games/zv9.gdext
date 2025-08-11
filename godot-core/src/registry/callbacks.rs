@@ -110,6 +110,30 @@ where
     // std::mem::forget(base_class_name);
 }
 
+pub(crate) fn create_custom_with_initer<T, F>(
+    make_user_instance: F,
+) -> Result<sys::GDExtensionObjectPtr, PanicPayload>
+where
+    T: GodotClass,
+    F: FnOnce(crate::obj::Initer<T::Base>) -> T,
+{
+    let base_class_name = T::Base::class_name();
+    let base_ptr = unsafe { interface_fn!(classdb_construct_object)(base_class_name.string_sys()) };
+
+    match create_rust_part_for_existing_godot_part_with_initer(make_user_instance, base_ptr) {
+        Ok(_extension_ptr) => Ok(base_ptr),
+        Err(payload) => {
+            // Creation of extension object failed; we must now also destroy the base object to avoid leak.
+            // SAFETY: `base_ptr` was just created above.
+            unsafe { interface_fn!(object_destroy)(base_ptr) };
+
+            Err(payload)
+        }
+    }
+
+    // std::mem::forget(base_class_name);
+}
+
 /// Add Rust-side state for a GDExtension base object.
 ///
 /// With godot-rust, custom objects consist of two parts: the Godot object and the Rust object. This method takes the Godot part by pointer,
@@ -161,6 +185,64 @@ where
     }
 
     // No std::mem::forget(base_copy) here, since Base may stores other fields that need deallocation.
+    Ok(instance_ptr)
+}
+
+/// Add Rust-side state for a GDExtension base object using the memory-efficient `Initer<T>` pattern.
+///
+/// This is a variant of [`create_rust_part_for_existing_godot_part`] that uses [`Initer<T>`] instead
+/// of [`Base<T>`] during initialization, avoiding permanent memory overhead for reference counting.
+///
+/// The key difference is that surplus reference management happens through a callback mechanism
+/// rather than storing extra fields permanently in the [`Base<T>`].
+fn create_rust_part_for_existing_godot_part_with_initer<T, F>(
+    make_user_instance: F,
+    base_ptr: sys::GDExtensionObjectPtr,
+) -> Result<sys::GDExtensionClassInstancePtr, PanicPayload>
+where
+    T: GodotClass,
+    F: FnOnce(crate::obj::Initer<T::Base>) -> T,
+{
+    use crate::obj::Initer;
+
+    let class_name = T::class_name();
+    //out!("create callback with initer: {}", class_name.backing);
+
+    let base = unsafe { Base::from_sys(base_ptr) };
+
+    // Create Initer - now directly uses the base without type conversion.
+    let initer = Initer::new(unsafe { Base::from_base(&base) });
+
+    // Create base_copy before moving base to construct()
+    let mut base_copy = unsafe { Base::from_base(&base) };
+
+    // User constructor init() can panic, which crashes the engine if unhandled.
+    let context = || format!("panic during {class_name}::init() constructor with Initer");
+    let code = || make_user_instance(initer);
+    let user_instance = handle_panic(context, std::panic::AssertUnwindSafe(code))?;
+
+    let instance = InstanceStorage::<T>::construct(user_instance, base);
+    let instance_rust_ptr = instance.into_raw();
+    let instance_ptr = instance_rust_ptr as sys::GDExtensionClassInstancePtr;
+
+    let binding_data_callbacks = crate::storage::nop_instance_callbacks();
+    unsafe {
+        interface_fn!(object_set_instance)(base_ptr, class_name.string_sys(), instance_ptr);
+        interface_fn!(object_set_instance_binding)(
+            base_ptr,
+            sys::get_library() as *mut std::ffi::c_void,
+            instance_ptr as *mut std::ffi::c_void,
+            &binding_data_callbacks,
+        );
+    }
+
+    // Check if Base::to_init_gd() was called (similar to existing callback pattern)
+    // This delegates surplus reference handling to the existing Base implementation
+    if base_copy.mark_initialized() {
+        let instance_ref = unsafe { &*instance_rust_ptr };
+        instance_ref.mark_surplus_ref();
+    }
+
     Ok(instance_ptr)
 }
 
