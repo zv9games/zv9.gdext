@@ -157,7 +157,7 @@ fn base_init_to_gd() {
         let _obj = Gd::<Based>::from_init_fn(|base| {
             let temp_obj = Based { base, i: 999 };
 
-            // This should panic because we're calling to_gd() during initialization
+            // Call to self.to_gd() during initialization should panic in Debug builds.
             let _gd = godot::obj::WithBaseField::to_gd(&temp_obj);
 
             temp_obj
