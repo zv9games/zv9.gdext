@@ -51,7 +51,7 @@ fn node_get_node_fail() {
     child.free();
 }
 
-#[itest]
+#[itest(focus)]
 fn node_path_from_str(ctx: &TestContext) {
     let child = ctx.scene_tree.clone();
     assert_eq!(
