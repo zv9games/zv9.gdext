@@ -54,10 +54,14 @@ fn node_get_node_fail() {
 #[itest(focus)]
 fn node_path_from_str(ctx: &TestContext) {
     let child = ctx.scene_tree.clone();
-    assert_eq!(
-        child.get_path().to_string(),
-        NodePath::from_str("/root/TestRunner").unwrap().to_string()
-    );
+    let actual_path = child.get_path().to_string();
+    let expected_path = NodePath::from_str("/root/TestRunner").unwrap().to_string();
+    
+    println!("DEBUG: actual_path = '{}'", actual_path);
+    println!("DEBUG: expected_path = '{}'", expected_path);
+    println!("DEBUG: instance_id = {:?}", child.instance_id());
+    
+    assert_eq!(actual_path, expected_path);
 }
 
 #[itest(skip)]
