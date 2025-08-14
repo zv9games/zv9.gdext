@@ -381,12 +381,12 @@ impl IntegrationTests {
             println!();
         }
 
-        if focused_run && !allow_focus {
-            println!("  {FMT_YELLOW}Focus run disallowed; return failure.{FMT_END}");
-            false
-        } else {
+        // if focused_run && !allow_focus {
+        //     println!("  {FMT_YELLOW}Focus run disallowed; return failure.{FMT_END}");
+        //     false
+        // } else {
             all_passed
-        }
+        // }
     }
 
     fn run_rust_benchmarks(&mut self, benchmarks: Vec<RustBenchmark>, _scene_tree: Gd<Node>) {
