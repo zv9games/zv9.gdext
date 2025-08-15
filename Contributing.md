@@ -34,6 +34,17 @@ Non-draft PRs that pass CI are assumed to be mergeable (and maintainers may do s
 <br/>
 
 
+### AI tools
+
+If you use AI assistants and agents, it is your responsibility to:
+- Carefully review and adjust the code **before** submitting a pull request.
+- Understand **100%** of the submitted code and be able to explain it in your own words
+- Uphold any copyrights and licenses. For more involved algorithms, research if one isn't already available in a library.
+
+The section _[Larger changes need design](#larger-changes-need-design)_ is even more important here. Dropping large amounts of code
+without clear design can result in your PR being closed without being looked into.
+
+
 ## Development tools
 
 Further information for contributors, such as tools supporting you in local development, is available in the [godot-rust book].
